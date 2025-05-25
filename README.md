@@ -135,6 +135,7 @@ Navigate to **OAuth & Permissions** in the left-hand menu and under **Scopes →
 ```
 channels:history
 groups:history
+groups:read
 im:history
 mpim:history
 users:read
