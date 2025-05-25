@@ -1,6 +1,6 @@
 # 📅 Daily Brief
 
-Generate a personalized executive daily briefing with a single command-line tool. Pulls in signals from your Google Calendar, Gmail, Todoist, local Markdown notes, and even Slack – then condenses it all using AI into a readable summary.
+Generate a personalized executive daily briefing with a single command-line tool. Pulls in signals from your Google Calendar, Gmail, Todoist, local Markdown notes, and Slack – then condenses it all using AI into a readable summary.
 
 ## 🔧 Setup
 
@@ -90,4 +90,4 @@ Then it asks your model of choice to create a concise, structured daily brief.
 
 ## 🧙 A note from the author
 
-This tool, including this README, was 100% vibe-coded with [ChatGPT-4o](https://openai.com/chatgpt). Any bugs are probably just hallucinated features. 😄
+This tool, including this README, was 100% vibe-coded with ChatGPT 4o. Any bugs are probably just hallucinated features. 😄

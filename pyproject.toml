@@ -1,11 +1,11 @@
 [project]
 name = "daily-brief"
 version = "0.1.0"
-description = "A CLI tool that generates a daily briefing from your calendar, email, journal, and task list."
+description = "A CLI tool that generates a daily briefing from your Google Calendar, Gmail, Markdown journal files, Slack messages, and Todoist task list."
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
-  { name="Your Name", email="you@example.com" }
+  { name="Floris Vlasveld", email="floris@floris.io" }
 ]
 dependencies = [
   "openai>=1.14",
