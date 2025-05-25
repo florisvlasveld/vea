@@ -1,0 +1,36 @@
+# Ignore Python virtual environments
+.venv/
+venv/
+env/
+
+# Editor and system files
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Credentials and environment
+.env
+.env.*
+.credentials/
+credentials/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+
+# Build and packaging
+*.egg-info/
+build/
+dist/
+*.zip
+
+# Test artifacts
+.coverage
+htmlcov/
+*.tox/
+.cache/
+pytest_cache/
