@@ -88,6 +88,66 @@ You can choose between OpenAI, Anthropic (Claude), or Google Gemini models. The 
 
 Then it asks your model of choice to create a concise, structured daily brief.
 
+## 💬 Slack Integration
+
+To include relevant messages from Slack in your daily brief, you'll need to create and install a Slack App that can access channel history.
+
+### 1. Create a Slack App
+
+Go to: [https://api.slack.com/apps](https://api.slack.com/apps)
+
+- Click **"Create New App"**
+- Choose **"From scratch"**
+- Give it a name like `Daily Brief Assistant`
+- Select your Slack workspace
+
+### 2. Add OAuth Scopes
+
+Navigate to **OAuth & Permissions** in the left-hand menu and under **Scopes → Bot Token Scopes**, add the following:
+
+```
+channels:history
+groups:history
+im:history
+mpim:history
+users:read
+conversations.list
+```
+
+These scopes allow the app to:
+- Read messages from public, private, and direct channels
+- Identify users (to show who said what)
+
+> ✅ You may need to re-authorize the app if you change scopes later.
+
+### 3. Install the App to your workspace
+
+In **OAuth & Permissions**, scroll to the top and click **"Install App to Workspace"**.
+
+This will generate a **Bot Token**, which you’ll use as `SLACK_TOKEN` in your `.env` file.
+
+The token will look like:
+```
+xoxb-1234567890-abcdefGHIJKLMNOPQrstuv
+```
+
+> ⚠️ Keep this token secret — it provides read access to your Slack data.
+
+### 4. Configure your `.env` file
+
+Add this to your `.env`:
+```env
+SLACK_TOKEN=xoxb-your-bot-token
+```
+
+### 5. Enable Slack loading
+
+By default, Slack loading is enabled when you run `daily-brief generate`. If you want to skip it:
+
+```bash
+daily-brief generate --include-slack False
+```
+
 ## 🧙 A note from the author
 
 This tool, including this README, was 100% vibe-coded with ChatGPT 4o. Any bugs are probably just hallucinated features. 😄
