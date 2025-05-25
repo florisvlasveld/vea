@@ -2,6 +2,7 @@
 
 Generate a personalized executive daily briefing with a single command-line tool. Pulls in signals from your Google Calendar, Gmail, Todoist, local Markdown notes, and Slack – then condenses it all using AI into a readable summary.
 
+
 ## 🔧 Setup
 
 ### 1. Google APIs
@@ -48,6 +49,7 @@ source .venv/bin/activate
 pip install -e .
 ```
 
+
 ## 🚀 Usage
 
 ⚠️ Note: Depending on how much data is being processed (calendar events, emails, tasks, notes, Slack messages), generating your daily brief may take several minutes to complete. Some models may not be able to handle the amount of input data.
@@ -75,7 +77,7 @@ daily-brief generate \
 
 Run `daily-brief generate --help` to view all available options.
 
-## 🤖 AI Summary Engine
+### 🤖 AI Summary Engine
 
 You can choose between OpenAI, Anthropic (Claude), or Google Gemini models. The tool builds a structured prompt with:
 
@@ -87,6 +89,31 @@ You can choose between OpenAI, Anthropic (Claude), or Google Gemini models. The 
 - Additional notes
 
 Then it asks your model of choice to create a concise, structured daily brief.
+
+### 📝 Vea Instructions in Today’s Journal
+
+You can give special instructions to the AI by writing a note to `Vea` in **today’s journal entry**.
+
+Add a bullet starting with `Vea` or `[[Vea]]` in your Markdown journal file:
+
+```markdown
+- [[Vea]] Include a short list of team birthdays this week
+```
+
+These instructions are:
+- Only processed if they appear in **today’s journal file**.
+- Ignored in all other journal entries.
+- Treated as **binding** — the AI will attempt to follow them, e.g.:
+  - Add custom insights.
+  - Emphasize specific events or people.
+  - Include extra sections or summaries.
+
+> Example use cases:
+> - “Vea, remind me to be diplomatic in the meeting with John.”
+> - “Vea, include a summary of the [[Monthly Report]].”
+
+🪄 This is a powerful way to tailor your daily brief without changing any code.
+
 
 ## 💬 Slack Integration
 
@@ -142,6 +169,7 @@ By default, Slack loading is enabled when you run `daily-brief generate`. If you
 ```bash
 daily-brief generate --include-slack False
 ```
+
 
 ## 🧙 A note from the author
 
