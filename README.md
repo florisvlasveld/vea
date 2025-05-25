@@ -128,7 +128,7 @@ This will generate a **Bot Token**, which you’ll use as `SLACK_TOKEN` in your 
 
 The token will look like:
 ```
-xoxb-1234567890-abcdefGHIJKLMNOPQrstuv
+xoxb-...
 ```
 
 > ⚠️ Keep this token secret — it provides read access to your Slack data.
