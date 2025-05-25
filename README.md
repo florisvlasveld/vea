@@ -103,7 +103,7 @@ Go to: [https://api.slack.com/apps](https://api.slack.com/apps)
 
 ### 2. Add OAuth Scopes
 
-Navigate to **OAuth & Permissions** in the left-hand menu and under **Scopes → Bot Token Scopes**, add the following:
+Navigate to **OAuth & Permissions** in the left-hand menu and under **Scopes → User Token Scopes**, add the following:
 
 ```
 channels:history
