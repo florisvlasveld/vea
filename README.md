@@ -126,11 +126,6 @@ In **OAuth & Permissions**, scroll to the top and click **"Install App to Worksp
 
 This will generate a **Bot Token**, which you’ll use as `SLACK_TOKEN` in your `.env` file.
 
-The token will look like:
-```
-xoxb-...
-```
-
 > ⚠️ Keep this token secret — it provides read access to your Slack data.
 
 ### 4. Configure your `.env` file
