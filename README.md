@@ -52,7 +52,7 @@ pip install -e .
 
 ## 🚀 Usage
 
-⚠️ Note: Depending on how much data is being processed (calendar events, emails, tasks, notes, Slack messages), generating your daily brief may take several minutes to complete. Some models may not be able to handle the amount of input data.
+⚠️ Note: Depending on how much data is being processed (calendar events, emails, tasks, notes, Slack messages), generating your daily brief may take several minutes or even significantly longer to complete. Some models may not be able to handle the amount of input data.
 
 ```bash
 daily-brief generate \
