@@ -134,12 +134,14 @@ Navigate to **OAuth & Permissions** in the left-hand menu and under **Scopes →
 
 ```
 channels:history
+channels:read
 groups:history
 groups:read
 im:history
+im:read
 mpim:history
+mpim:read
 users:read
-conversations.list
 ```
 
 These scopes allow the app to:
