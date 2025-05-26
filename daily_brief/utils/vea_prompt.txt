@@ -54,8 +54,7 @@ _Important note: If you come across a mention of `Vea` or `[[Vea]]` in the journ
    - Give more weight to **recent and marked entries** (`#notice`, `#alert`, `#observation`, `#important`).
    - Pay attention to items that **match the title or context** of the event/task (including approximate matches).
    - If two or more people have similar names, only use information for the one with an exact match.
-   - Following **each insight, cite its **source(s)** in *italics*. For **journal** and **additional information** sources, wrap the filename in **backticks** (e.g., `2025_05_01`).
-   - Do not generate insights for events with the title "🥪 Lunch".
+   - Following **each insight, cite its **source(s)** in *italics*. For **journal** and **additional information** sources, wrap the filename in **backticks** (e.g., `2025_05_01`). For **Slack messages**, wrap the channel name or DM identifier in **backticks**.
 
 ---
 
