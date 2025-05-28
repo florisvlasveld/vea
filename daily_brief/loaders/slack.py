@@ -1,5 +1,6 @@
 import os
 import time
+import re
 import logging
 from datetime import datetime, timedelta
 from typing import List, Dict, Any
@@ -8,32 +9,27 @@ from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)  # Use INFO or DEBUG as needed
+logging.basicConfig(level=logging.DEBUG)
 
 # === Configurable Constants ===
 WORKDAYS_LOOKBACK = 2
 API_CALL_DELAY_SECONDS = 1.0
 CHANNEL_TYPES = ["public_channel", "private_channel", "im", "mpim"]
 
-
 def calculate_lookback_start(now: datetime, workdays: int) -> datetime:
     logger.debug(f"Calculating lookback start time from now: {now.isoformat()}")
     workdays_remaining = workdays
     current = now
-
     while workdays_remaining > 0:
         current -= timedelta(days=1)
         if current.weekday() < 5:
             workdays_remaining -= 1
-
     if now.weekday() in (0, 1):
         logger.debug("Today is Monday or Tuesday; including the weekend in lookback range.")
         while current.weekday() > 3:
             current -= timedelta(days=1)
-
     logger.info(f"Fetching messages from: {current.isoformat()} to {now.isoformat()}")
     return current
-
 
 def safe_slack_call(client_func, **kwargs):
     while True:
@@ -47,6 +43,16 @@ def safe_slack_call(client_func, **kwargs):
             else:
                 raise
 
+def replace_slack_mentions(text: str, user_map: Dict[str, str]) -> str:
+    # Replace user mentions
+    text = re.sub(r"<@([A-Z0-9]+)>", lambda m: f"@{user_map.get(m.group(1), m.group(1))}", text)
+    # Replace channel mentions
+    text = re.sub(r"<#([A-Z0-9]+)\|([^>]+)>", r"#\2", text)
+    # Replace user group mentions
+    text = re.sub(r"<!subteam\^([A-Z0-9]+)\|@([^>]+)>", r"@\2", text)
+    # Replace special mentions like <!here>
+    text = re.sub(r"<!([^>]+)>", r"@\1", text)
+    return text
 
 def load_slack_messages(workdays_lookback: int = WORKDAYS_LOOKBACK) -> Dict[str, List[Dict[str, Any]]]:
     logger.info("Starting Slack message load (user token mode)...")
@@ -95,11 +101,7 @@ def load_slack_messages(workdays_lookback: int = WORKDAYS_LOOKBACK) -> Dict[str,
                 is_archived = channel.get("is_archived", False)
 
                 if conv_type in ("public_channel", "private_channel"):
-                    if not is_member:
-                        logger.debug(f"Skipping {channel.get('name')} — not a member.")
-                        continue
-                    if is_archived:
-                        logger.debug(f"Skipping {channel.get('name')} — archived.")
+                    if not is_member or is_archived:
                         continue
 
                 channel_id = channel["id"]
@@ -114,7 +116,6 @@ def load_slack_messages(workdays_lookback: int = WORKDAYS_LOOKBACK) -> Dict[str,
                 else:
                     channel_name = channel.get("name", channel_id)
 
-                # Filter out inactive channels only if Slack gives us latest_ts
                 if latest_ts_str and latest_message_ts < oldest_ts:
                     logger.debug(f"Skipping {channel_name} — no recent activity.")
                     continue
@@ -136,23 +137,14 @@ def load_slack_messages(workdays_lookback: int = WORKDAYS_LOOKBACK) -> Dict[str,
                     raw_msgs = history.get("messages", [])
                     logger.debug(f"[{channel_name}] history returned {len(raw_msgs)} messages")
 
-                    if raw_msgs:
-                        first_msg_ts = float(raw_msgs[0]["ts"])
-                        first_msg_dt = datetime.fromtimestamp(first_msg_ts).isoformat()
-                        logger.debug(f"[{channel_name}] First message timestamp: {first_msg_dt}")
-
                     for msg in raw_msgs:
-                        subtype = msg.get("subtype")
-                        if subtype:
-                            logger.debug(f"[{channel_name}] Skipping system message with subtype: {subtype}")
+                        if msg.get("subtype"):
                             continue
 
                         ts = datetime.fromtimestamp(float(msg["ts"])).isoformat()
                         user_id = msg.get("user", "unknown")
                         user_name = user_map.get(user_id, user_id)
-                        text = msg.get("text", "").strip()
-
-                        logger.debug(f"[{channel_name}] Message from {user_name} at {ts}: {text}")
+                        text = replace_slack_mentions(msg.get("text", "").strip(), user_map)
 
                         message_data = {
                             "user": user_name,
@@ -175,13 +167,11 @@ def load_slack_messages(workdays_lookback: int = WORKDAYS_LOOKBACK) -> Dict[str,
                                 replies = []
                                 for reply in thread_messages:
                                     if reply.get("subtype"):
-                                        logger.debug(f"[{channel_name}] Skipping thread reply with subtype: {reply['subtype']}")
                                         continue
-
                                     reply_ts = datetime.fromtimestamp(float(reply["ts"])).isoformat()
                                     reply_user_id = reply.get("user", "unknown")
                                     reply_user = user_map.get(reply_user_id, reply_user_id)
-                                    reply_text = reply.get("text", "").strip()
+                                    reply_text = replace_slack_mentions(reply.get("text", "").strip(), user_map)
                                     replies.append({
                                         "user": reply_user,
                                         "timestamp": reply_ts,
@@ -201,8 +191,6 @@ def load_slack_messages(workdays_lookback: int = WORKDAYS_LOOKBACK) -> Dict[str,
                 if messages:
                     logger.info(f"Collected {len(messages)} messages from {channel_name}")
                     results[channel_name] = messages
-                else:
-                    logger.debug(f"No messages found in {channel_name}")
 
             cursor = response.get("response_metadata", {}).get("next_cursor")
             if not cursor:
