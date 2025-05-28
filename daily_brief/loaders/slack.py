@@ -3,35 +3,62 @@ import time
 import re
 import logging
 from datetime import datetime, timedelta
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
+# === Logging Setup ===
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.INFO)
 
 # === Configurable Constants ===
-WORKDAYS_LOOKBACK = 2
-API_CALL_DELAY_SECONDS = 1.0
-CHANNEL_TYPES = ["public_channel", "private_channel", "im", "mpim"]
+WORKDAYS_LOOKBACK = 2  # Number of past workdays to include in message search
+API_CALL_DELAY_SECONDS = 1.0  # Delay between Slack API calls to prevent rate limiting
+CHANNEL_TYPES = ["public_channel", "private_channel", "im", "mpim"]  # Types of conversations to fetch
+
 
 def calculate_lookback_start(now: datetime, workdays: int) -> datetime:
-    logger.debug(f"Calculating lookback start time from now: {now.isoformat()}")
-    workdays_remaining = workdays
+    """
+    Calculate the datetime that marks the beginning of the lookback period.
+
+    This function subtracts the specified number of workdays (Mon–Fri) from the current time.
+    If today is Monday or Tuesday, it also includes the weekend in the lookback period.
+
+    Args:
+        now: Current datetime.
+        workdays: Number of workdays to look back.
+
+    Returns:
+        The datetime representing the start of the lookback window.
+    """
     current = now
+    workdays_remaining = workdays
+
     while workdays_remaining > 0:
         current -= timedelta(days=1)
         if current.weekday() < 5:
             workdays_remaining -= 1
-    if now.weekday() in (0, 1):
-        logger.debug("Today is Monday or Tuesday; including the weekend in lookback range.")
-        while current.weekday() > 3:
+
+    if now.weekday() in (0, 1):  # Monday or Tuesday
+        while current.weekday() > 4:  # Include Sat/Sun if necessary
             current -= timedelta(days=1)
+
     logger.info(f"Fetching messages from: {current.isoformat()} to {now.isoformat()}")
     return current
 
+
 def safe_slack_call(client_func, **kwargs):
+    """
+    Call a Slack API function and handle rate limiting by retrying after delay.
+
+    Args:
+        client_func: A Slack client method to call.
+        **kwargs: Arguments passed to the Slack client method.
+
+    Returns:
+        The API response object.
+    """
     while True:
         try:
             return client_func(**kwargs)
@@ -43,19 +70,194 @@ def safe_slack_call(client_func, **kwargs):
             else:
                 raise
 
+
 def replace_slack_mentions(text: str, user_map: Dict[str, str]) -> str:
-    # Replace user mentions
+    """
+    Convert Slack internal mention formats to readable ones.
+
+    Replaces:
+    - User mentions (e.g. <@U12345>)
+    - Channel mentions (e.g. <#C12345|channel>)
+    - User group mentions (e.g. <!subteam^T123|@team>)
+    - Special mentions (e.g. <!here>)
+
+    Args:
+        text: The message text containing Slack mentions.
+        user_map: Mapping of user IDs to real names.
+
+    Returns:
+        A cleaned and human-readable version of the message text.
+    """
     text = re.sub(r"<@([A-Z0-9]+)>", lambda m: f"@{user_map.get(m.group(1), m.group(1))}", text)
-    # Replace channel mentions
     text = re.sub(r"<#([A-Z0-9]+)\|([^>]+)>", r"#\2", text)
-    # Replace user group mentions
     text = re.sub(r"<!subteam\^([A-Z0-9]+)\|@([^>]+)>", r"@\2", text)
-    # Replace special mentions like <!here>
     text = re.sub(r"<!([^>]+)>", r"@\1", text)
     return text
 
+
+def build_user_map(client: WebClient) -> Dict[str, str]:
+    """
+    Build a mapping from Slack user IDs to user names.
+
+    Args:
+        client: An authenticated Slack WebClient.
+
+    Returns:
+        A dictionary mapping user IDs to real names (or usernames).
+    """
+    logger.info("Fetching Slack user list...")
+    user_map = {}
+    try:
+        users = safe_slack_call(client.users_list)["members"]
+        for user in users:
+            user_map[user["id"]] = user.get("real_name", user.get("name", "unknown"))
+    except SlackApiError as e:
+        logger.warning(f"Failed to fetch users: {e.response['error']}")
+    return user_map
+
+
+def get_channel_name(channel: Dict[str, Any], conv_type: str, user_map: Dict[str, str]) -> str:
+    """
+    Generate a human-readable name for the given Slack channel or DM.
+
+    Args:
+        channel: Slack channel or conversation metadata.
+        conv_type: Type of the conversation.
+        user_map: Mapping of user IDs to names.
+
+    Returns:
+        A string representing the channel name.
+    """
+    if conv_type == "im":
+        user_id = channel.get("user")
+        return f"DM with {user_map.get(user_id, user_id)}"
+    elif conv_type == "mpim":
+        return f"Group DM {channel['id']}"
+    else:
+        return channel.get("name", channel["id"])
+
+
+def fetch_thread_replies(client: WebClient, channel_id: str, thread_ts: str, user_map: Dict[str, str]) -> List[Dict[str, Any]]:
+    """
+    Fetch replies to a thread in a Slack conversation.
+
+    Args:
+        client: Authenticated Slack WebClient.
+        channel_id: ID of the Slack channel.
+        thread_ts: Timestamp of the root message.
+        user_map: Mapping of user IDs to user names.
+
+    Returns:
+        A list of reply messages in dictionary format.
+    """
+    replies = []
+    try:
+        thread_data = safe_slack_call(
+            client.conversations_replies,
+            channel=channel_id,
+            ts=thread_ts,
+            inclusive=True,
+            limit=50
+        ).get("messages", [])[1:]  # Skip the root message
+
+        for reply in thread_data:
+            if reply.get("subtype"):
+                continue
+            replies.append({
+                "user": user_map.get(reply.get("user", "unknown"), reply.get("user", "unknown")),
+                "timestamp": datetime.fromtimestamp(float(reply["ts"])).isoformat(),
+                "text": replace_slack_mentions(reply.get("text", "").strip(), user_map)
+            })
+
+    except SlackApiError as e:
+        logger.warning(f"Failed to fetch thread replies: {e.response['error']}")
+    return replies
+
+
+def fetch_messages_from_channel(
+    client: WebClient,
+    channel: Dict[str, Any],
+    conv_type: str,
+    oldest_ts: float,
+    latest_ts: float,
+    user_map: Dict[str, str]
+) -> Optional[List[Dict[str, Any]]]:
+    """
+    Fetch messages from a specific Slack channel.
+
+    Args:
+        client: Authenticated Slack WebClient.
+        channel: Metadata for the Slack channel.
+        conv_type: Type of conversation (e.g. public_channel, im).
+        oldest_ts: Oldest timestamp to include.
+        latest_ts: Latest timestamp to include.
+        user_map: Mapping of user IDs to names.
+
+    Returns:
+        A list of messages (including thread replies), or None if no valid messages are found.
+    """
+    if conv_type in ("public_channel", "private_channel"):
+        if not channel.get("is_member", False) or channel.get("is_archived", False):
+            return None
+
+    latest_ts_str = channel.get("latest", {}).get("ts")
+    if latest_ts_str and float(latest_ts_str) < oldest_ts:
+        return None
+
+    channel_id = channel["id"]
+    channel_name = get_channel_name(channel, conv_type, user_map)
+
+    logger.debug(f"Fetching messages from {channel_name} ({channel_id})")
+    time.sleep(API_CALL_DELAY_SECONDS)
+
+    try:
+        history = safe_slack_call(
+            client.conversations_history,
+            channel=channel_id,
+            oldest=str(oldest_ts),
+            latest=str(latest_ts),
+            inclusive=True,
+            limit=100
+        )
+    except SlackApiError as e:
+        logger.warning(f"Failed to fetch messages from {channel_name}: {e.response['error']}")
+        return None
+
+    messages = []
+    for msg in history.get("messages", []):
+        if msg.get("subtype"):
+            continue
+
+        msg_data = {
+            "user": user_map.get(msg.get("user", "unknown"), msg.get("user", "unknown")),
+            "timestamp": datetime.fromtimestamp(float(msg["ts"])).isoformat(),
+            "text": replace_slack_mentions(msg.get("text", "").strip(), user_map),
+        }
+
+        if msg.get("thread_ts") == msg.get("ts"):
+            time.sleep(API_CALL_DELAY_SECONDS)
+            msg_data["replies"] = fetch_thread_replies(client, channel_id, msg["ts"], user_map)
+
+        messages.append(msg_data)
+
+    return messages if messages else None
+
+
 def load_slack_messages(workdays_lookback: int = WORKDAYS_LOOKBACK) -> Dict[str, List[Dict[str, Any]]]:
-    logger.info("Starting Slack message load (user token mode)...")
+    """
+    Load recent messages from Slack based on conversation types and workday lookback.
+
+    Uses a user token from the SLACK_TOKEN environment variable. Gathers messages
+    across various conversation types and includes threads, filtering out archived channels
+    and non-member channels where appropriate.
+
+    Args:
+        workdays_lookback: How many previous workdays to include.
+
+    Returns:
+        A dictionary mapping channel names to lists of messages.
+    """
+    logger.info("Starting Slack message load...")
     token = os.environ.get("SLACK_TOKEN")
     if not token:
         logger.warning("SLACK_TOKEN is not set.")
@@ -63,24 +265,16 @@ def load_slack_messages(workdays_lookback: int = WORKDAYS_LOOKBACK) -> Dict[str,
 
     client = WebClient(token=token)
     now = datetime.now()
-    oldest_dt = calculate_lookback_start(now, workdays_lookback)
-    oldest_ts = oldest_dt.timestamp()
+    oldest_ts = calculate_lookback_start(now, workdays_lookback).timestamp()
     latest_ts = now.timestamp()
 
-    user_map: Dict[str, str] = {}
-    results: Dict[str, List[Dict[str, Any]]] = {}
-
-    logger.info("Fetching Slack user list...")
-    try:
-        for user in safe_slack_call(client.users_list)["members"]:
-            user_map[user["id"]] = user.get("real_name", user.get("name", "unknown"))
-        logger.debug(f"Fetched {len(user_map)} users.")
-    except SlackApiError as e:
-        logger.warning(f"Failed to fetch users: {e.response['error']}")
+    user_map = build_user_map(client)
+    results = {}
 
     for conv_type in CHANNEL_TYPES:
         logger.info(f"Fetching conversations of type: {conv_type}")
         cursor = None
+
         while True:
             try:
                 response = safe_slack_call(
@@ -90,104 +284,15 @@ def load_slack_messages(workdays_lookback: int = WORKDAYS_LOOKBACK) -> Dict[str,
                     cursor=cursor,
                     exclude_archived=True
                 )
-                channels = response.get("channels", [])
-                logger.debug(f"Found {len(channels)} {conv_type} channels.")
             except SlackApiError as e:
                 logger.warning(f"Failed to fetch {conv_type} channels: {e.response['error']}")
                 break
 
-            for channel in channels:
-                is_member = channel.get("is_member", False)
-                is_archived = channel.get("is_archived", False)
-
-                if conv_type in ("public_channel", "private_channel"):
-                    if not is_member or is_archived:
-                        continue
-
-                channel_id = channel["id"]
-                latest_ts_str = channel.get("latest", {}).get("ts", None)
-                latest_message_ts = float(latest_ts_str) if latest_ts_str else 0.0
-
-                if conv_type == "im":
-                    user_id = channel.get("user")
-                    channel_name = f"DM with {user_map.get(user_id, user_id)}"
-                elif conv_type == "mpim":
-                    channel_name = f"Group DM {channel_id}"
-                else:
-                    channel_name = channel.get("name", channel_id)
-
-                if latest_ts_str and latest_message_ts < oldest_ts:
-                    logger.debug(f"Skipping {channel_name} — no recent activity.")
-                    continue
-
-                time.sleep(API_CALL_DELAY_SECONDS)
-                logger.debug(f"Fetching messages from {channel_name} ({channel_id})")
-
-                messages = []
-
-                try:
-                    history = safe_slack_call(
-                        client.conversations_history,
-                        channel=channel_id,
-                        oldest=str(oldest_ts),
-                        latest=str(latest_ts),
-                        inclusive=True,
-                        limit=100
-                    )
-                    raw_msgs = history.get("messages", [])
-                    logger.debug(f"[{channel_name}] history returned {len(raw_msgs)} messages")
-
-                    for msg in raw_msgs:
-                        if msg.get("subtype"):
-                            continue
-
-                        ts = datetime.fromtimestamp(float(msg["ts"])).isoformat()
-                        user_id = msg.get("user", "unknown")
-                        user_name = user_map.get(user_id, user_id)
-                        text = replace_slack_mentions(msg.get("text", "").strip(), user_map)
-
-                        message_data = {
-                            "user": user_name,
-                            "timestamp": ts,
-                            "text": text,
-                        }
-
-                        if "thread_ts" in msg and msg["thread_ts"] == msg["ts"]:
-                            logger.debug(f"Fetching replies for thread in {channel_name} at {ts}")
-                            time.sleep(API_CALL_DELAY_SECONDS)
-                            try:
-                                replies_response = safe_slack_call(
-                                    client.conversations_replies,
-                                    channel=channel_id,
-                                    ts=msg["ts"],
-                                    inclusive=True,
-                                    limit=50
-                                )
-                                thread_messages = replies_response.get("messages", [])[1:]
-                                replies = []
-                                for reply in thread_messages:
-                                    if reply.get("subtype"):
-                                        continue
-                                    reply_ts = datetime.fromtimestamp(float(reply["ts"])).isoformat()
-                                    reply_user_id = reply.get("user", "unknown")
-                                    reply_user = user_map.get(reply_user_id, reply_user_id)
-                                    reply_text = replace_slack_mentions(reply.get("text", "").strip(), user_map)
-                                    replies.append({
-                                        "user": reply_user,
-                                        "timestamp": reply_ts,
-                                        "text": reply_text
-                                    })
-                                if replies:
-                                    message_data["replies"] = replies
-                            except SlackApiError as e:
-                                logger.warning(f"Failed to fetch thread replies in {channel_name}: {e.response['error']}")
-
-                        messages.append(message_data)
-
-                except SlackApiError as e:
-                    logger.warning(f"Failed to fetch messages from {channel_name}: {e.response['error']}")
-                    continue
-
+            for channel in response.get("channels", []):
+                channel_name = get_channel_name(channel, conv_type, user_map)
+                messages = fetch_messages_from_channel(
+                    client, channel, conv_type, oldest_ts, latest_ts, user_map
+                )
                 if messages:
                     logger.info(f"Collected {len(messages)} messages from {channel_name}")
                     results[channel_name] = messages
