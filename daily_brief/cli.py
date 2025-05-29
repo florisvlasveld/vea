@@ -44,7 +44,7 @@ def generate(
     debug: bool = typer.Option(False, help="Enable debug logging"),
     quiet: bool = typer.Option(False, help="Suppress output to stdout"),
     journal_dir: Optional[Path] = typer.Option(None, help="Directory with Markdown journal files"),
-    journal_days: int = typer.Option(20, help="Number of past days of journals to include"),
+    journal_days: int = typer.Option(21, help="Number of past days of journals to include"),
     extra_dir: Optional[Path] = typer.Option(None, help="Directory with additional Markdown files"),
     extra_labels: Optional[List[str]] = typer.Option(None, help="List of additional Gmail labels to fetch emails from"),
     model: str = typer.Option("gemini-2.5-pro-preview-05-06", help="Model to use for summarization (OpenAI, Google Gemini, or Anthropic)"),

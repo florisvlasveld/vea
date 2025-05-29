@@ -26,13 +26,13 @@ def resolve_references(content: str, alias_map: Dict[str, str]) -> str:
 
 def load_journals(
     journal_dir: Path,
-    journal_days: int = 25,
+    journal_days: int = 21,
     alias_map: Optional[Dict[str, str]] = None,
     target_date: Optional[datetime.date] = None,
 ) -> List[Dict[str, str]]:
     """
     Load journal entries (Markdown files) within the past journal_days. If target_date is provided,
-    only include entries with matching date or exclude other entries' 'Vea' lines.
+    only include entries with matching date.
     """
     if not journal_dir.is_dir():
         logger.warning(f"Journal directory not found: {journal_dir}")
@@ -47,7 +47,7 @@ def load_journals(
             date_str = path.stem.replace("_", "-")
             file_date = datetime.strptime(date_str, "%Y-%m-%d").date()
 
-            if file_date >= cutoff_date and path.stat().st_size <= MAX_SIZE:
+            if cutoff_date <= file_date <= target_date and path.stat().st_size <= MAX_SIZE:    
                 content = path.read_text(encoding="utf-8")
 
                 # If target_date is set, remove lines beginning with '- [[Vea]]' from other dates
