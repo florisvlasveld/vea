@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 # === Configurable Constants ===
 WORKDAYS_LOOKBACK = 2
-API_CALL_DELAY_SECONDS = 1.0
 CHANNEL_TYPES = ["public_channel", "private_channel", "im", "mpim"]
 
 
@@ -169,7 +168,7 @@ def load_slack_messages(workdays_lookback: int = WORKDAYS_LOOKBACK) -> Dict[str,
                     if not channel.get("is_member", False) or channel.get("is_archived", False):
                         continue
                 latest_ts_str = channel.get("latest", {}).get("ts")
-                if not latest_ts_str or float(latest_ts_str) < oldest_ts:
+                if latest_ts_str and float(latest_ts_str) < oldest_ts:
                     continue
                 channel_name = get_channel_name(channel, conv_type, user_map)
                 messages = fetch_messages_from_channel(client, channel, conv_type, oldest_ts, latest_ts, user_map)
