@@ -51,6 +51,7 @@ _Important note: If you come across a mention of `Vea` or `[[Vea]]` in the journ
      - recent developments or changes
    - Derive insights from content in Journals, Emails, Slack messages, and Additional Information.
    - When generating insights, treat each [[...]] reference as pointing to a specific file from the Additional Information section, based on the alias-resolved mapping already applied.
+   - For 1-on-1 meetings (e.g., where the title includes `1:1`, `1-on-1`, `1on1`, or `one-on-one`), retrieve and surface any agreed-upon follow-ups or action items from the previous meeting with the same individual, if available.
    - Give more weight to **recent and marked entries** (`#notice`, `#alert`, `#observation`, `#important`).
    - Pay attention to items that **match the title or context** of the event/task (including approximate matches).
    - If two or more people have similar names, only use information for the one with an exact match.
