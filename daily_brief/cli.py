@@ -1,7 +1,3 @@
-"""
-Command-line interface for the Daily Brief tool.
-"""
-
 import os
 import logging
 from datetime import datetime
@@ -21,6 +17,13 @@ from daily_brief.utils.summarization import summarize
 app = typer.Typer(help="Daily Brief CLI: Generate a personalized daily briefing.")
 
 load_dotenv()  # Load environment variables from .env if available
+
+
+def check_required_directories(journal_dir: Optional[str], extras_dir: Optional[str], save_path: Optional[str]) -> None:
+    for path_name, path in [('journal_dir', journal_dir), ('extras_dir', extras_dir), ('save_path', save_path)]:
+        if path and not os.path.isdir(path):
+            typer.echo(f"Error: Provided path for {path_name} does not exist: {path}", err=True)
+            raise typer.Exit(code=1)
 
 
 @app.command("auth")
@@ -57,6 +60,7 @@ def generate(
         None,
         help="Comma-separated list of keywords to blacklist from calendar events (overrides CALENDAR_EVENT_BLACKLIST)"
     ),
+    skip_path_checks: bool = typer.Option(False, help="Skip checks for input/output directory existence"),
 ) -> None:
     """
     Generate a daily briefing for the specified date by summarizing calendar events, emails,
@@ -64,6 +68,9 @@ def generate(
     """
     if debug:
         enable_debug_logging()
+
+    if not skip_path_checks:
+        check_required_directories(journal_dir, extra_dir, save_path)
 
     try:
         target_date = parse_date(date)
