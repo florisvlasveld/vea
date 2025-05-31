@@ -1,7 +1,3 @@
-"""
-Gmail integration: fetch recent emails and extract snippets.
-"""
-
 import base64
 import quopri
 import re

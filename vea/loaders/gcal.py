@@ -1,7 +1,3 @@
-"""
-Google Calendar integration: fetch events for a specific date.
-"""
-
 import os
 import re
 import logging

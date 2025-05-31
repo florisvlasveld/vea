@@ -1,7 +1,3 @@
-"""
-Local journal entries loader: read Markdown files for recent journal entries.
-"""
-
 import re
 import logging
 from datetime import datetime, timedelta

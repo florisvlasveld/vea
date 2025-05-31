@@ -1,7 +1,3 @@
-"""
-Load additional Markdown files and aliases for custom content (e.g., notes or project files).
-"""
-
 import logging
 import re
 from datetime import datetime, timedelta

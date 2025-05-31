@@ -7,16 +7,16 @@ from typing import List, Optional
 import typer
 from dotenv import load_dotenv
 
-from daily_brief.loaders import gcal, gmail, journals, extras, todoist, slack as slack_loader
-from daily_brief.auth import authorize
-from daily_brief.utils.date_utils import parse_date
-from daily_brief.utils.output_utils import resolve_output_path
-from daily_brief.utils.error_utils import enable_debug_logging, handle_exception
-from daily_brief.utils.summarization import summarize
+from vea.loaders import gcal, gmail, journals, extras, todoist, slack as slack_loader
+from vea.auth import authorize
+from vea.utils.date_utils import parse_date
+from vea.utils.output_utils import resolve_output_path
+from vea.utils.error_utils import enable_debug_logging, handle_exception
+from vea.utils.summarization import summarize
 
-app = typer.Typer(help="Daily Brief CLI: Generate a personalized daily briefing.")
+app = typer.Typer(help="Vea: Generate a personalized daily briefing.")
 
-load_dotenv()  # Load environment variables from .env if available
+load_dotenv()
 
 
 def check_required_directories(journal_dir: Optional[str], extras_dir: Optional[str], save_path: Optional[str]) -> None:
@@ -30,9 +30,6 @@ def check_required_directories(journal_dir: Optional[str], extras_dir: Optional[
 def auth_command(
     scopes: List[str] = typer.Argument(..., help="Services to authorize (e.g., calendar gmail)")
 ) -> None:
-    """
-    Authorize Google API services and save credentials.
-    """
     try:
         authorize(scopes)
     except Exception as e:
@@ -62,10 +59,7 @@ def generate(
     ),
     skip_path_checks: bool = typer.Option(False, help="Skip checks for input/output directory existence"),
 ) -> None:
-    """
-    Generate a daily briefing for the specified date by summarizing calendar events, emails,
-    tasks, journal entries, and other inputs using AI.
-    """
+
     if debug:
         enable_debug_logging()
 

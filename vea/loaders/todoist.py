@@ -1,7 +1,3 @@
-"""
-Todoist integration: fetch tasks due on or before the target date.
-"""
-
 import logging
 from datetime import date, datetime
 from itertools import chain

@@ -1,7 +1,3 @@
-"""
-Google API authorization utilities.
-"""
-
 from pathlib import Path
 from typing import List
 
@@ -17,9 +13,6 @@ CLIENT_SECRET = Path("credentials/client_secret.json")
 
 
 def authorize(scopes: List[str]) -> None:
-    """
-    Authorize Google API scopes and save access tokens to the .credentials directory.
-    """
     TOKEN_DIR.mkdir(exist_ok=True)
     required_scopes = [SCOPES[s] for s in scopes if s in SCOPES]
     if not required_scopes:

@@ -1,9 +1,9 @@
-# 📅 Daily Brief
+# Vea
 
 Generate a personalized executive daily briefing with a single command-line tool. Pulls in signals from your Google Calendar, Gmail, Todoist, local Markdown notes, and Slack – then condenses it all using AI into a readable summary.
 
 
-## 🔧 Setup
+## Setup
 
 ### 1. Google APIs
 
@@ -50,7 +50,7 @@ pip install -e .
 ```
 
 
-## 🚀 Usage
+## Usage
 
 ⚠️ Note: Depending on how much data is being processed (calendar events, emails, tasks, notes, Slack messages), generating your daily brief may take several minutes or even significantly longer to complete. Some models may not be able to handle the amount of input data.
 
@@ -77,7 +77,7 @@ daily-brief generate \
 
 Run `daily-brief generate --help` to view all available options.
 
-### 🤖 AI Summary Engine
+### AI Summary Engine
 
 You can choose between OpenAI, Anthropic (Claude), or Google Gemini models. The tool builds a structured prompt with:
 
@@ -90,7 +90,7 @@ You can choose between OpenAI, Anthropic (Claude), or Google Gemini models. The 
 
 Then it asks your model of choice to create a concise, structured daily brief.
 
-### 📝 Vea Instructions in Today’s Journal
+### Vea Instructions in Today’s Journal
 
 You can give special instructions to the AI by writing a note to `Vea` in **today’s journal entry**.
 
@@ -115,7 +115,7 @@ These instructions are:
 🪄 This is a powerful way to tailor your daily brief without changing any code.
 
 
-## 💬 Slack Integration
+## Slack Integration
 
 To include relevant messages from Slack in your daily brief, you'll need to create and install a Slack App that can access channel history.
 
@@ -148,7 +148,7 @@ These scopes allow the app to:
 - Read messages from public, private, and direct channels
 - Identify users (to show who said what)
 
-> ✅ You may need to re-authorize the app if you change scopes later.
+> ⚠️ You may need to re-authorize the app if you change scopes later.
 
 ### 3. Install the App to your workspace
 
@@ -174,6 +174,6 @@ daily-brief generate --include-slack False
 ```
 
 
-## 🧙 A note from the author
+## A note from the author
 
 This tool, including this README, was 100% vibe-coded with ChatGPT 4o. Any bugs are probably just hallucinated features. 😄

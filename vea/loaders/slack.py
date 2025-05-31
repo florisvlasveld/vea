@@ -12,7 +12,7 @@ from slack_sdk.errors import SlackApiError
 logger = logging.getLogger(__name__)
 
 # === Configurable Constants ===
-WORKDAYS_LOOKBACK = 2
+WORKDAYS_LOOKBACK = 5
 CHANNEL_TYPES = ["public_channel", "private_channel", "im", "mpim"]
 
 

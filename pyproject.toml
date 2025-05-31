@@ -1,5 +1,5 @@
 [project]
-name = "daily-brief"
+name = "vea"
 version = "0.1.0"
 description = "A CLI tool that generates a daily briefing from your Google Calendar, Gmail, Markdown journal files, Slack messages, and Todoist task list."
 readme = "README.md"
@@ -23,8 +23,12 @@ dependencies = [
 ]
 
 [project.scripts]
-daily-brief = "daily_brief.cli:app"
+vea = "vea.cli:app"
 
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["vea*"]
+exclude = ["credentials*"]
