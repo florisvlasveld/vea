@@ -61,7 +61,8 @@ _Important note: If you come across a mention of `Vea` or `[[Vea]]` in the journ
 
 **Style Guidelines:**
 - Use a clear, friendly, and concise tone.
-- Use **bulleted lists** (with `- `) instead of numbered lists for all insights.
+- When rendering bulleted lists, use exactly one space between the hyphen and the content. Format must be: `- Item`.
+- Do not use multiple spaces after a hyphen in bullet lists or checkboxes (e.g., avoid `-   Item` or `-   [ ] Task`).
 - **Do not insert blank lines between bullet points.** Bullet items must appear one after another with no empty line in between.
 - Use bold sparingly and only where already instructed.
 - Do **not** include `markdown` as the first word in the output.
