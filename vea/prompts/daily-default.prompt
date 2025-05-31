@@ -65,6 +65,7 @@ _Important note: If you come across a mention of `Vea` or `[[Vea]]` in the journ
 - **Do not insert blank lines between bullet points.** Bullet items must appear one after another with no empty line in between.
 - Use bold sparingly and only where already instructed.
 - Do **not** include `markdown` as the first word in the output.
+- Do not add any introductionary remarks or commentary.
 - Do not add any closing remarks, summaries, sign-offs, or additional commentary. The output must end immediately after the last required section.
 
 ---
