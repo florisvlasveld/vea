@@ -13,6 +13,7 @@ from vea.utils.date_utils import parse_date
 from vea.utils.output_utils import resolve_output_path
 from vea.utils.error_utils import enable_debug_logging, handle_exception
 from vea.utils.summarization import summarize
+from vea.utils.pdf_utils import convert_markdown_to_pdf
 
 app = typer.Typer(help="Vea: Generate a personalized daily briefing.")
 
@@ -39,7 +40,8 @@ def auth_command(
 @app.command("generate")
 def generate(
     date: str = typer.Option(datetime.today().strftime("%Y-%m-%d"), help="Date for the brief (YYYY-MM-DD)"),
-    save: bool = typer.Option(True, help="Save output to file"),
+    save_markdown: bool = typer.Option(True, help="Save output to Markdown file"),
+    save_pdf: bool = typer.Option(False, help="Save output to PDF file"),
     save_path: Optional[Path] = typer.Option(None, help="Custom path or directory to save the output"),
     debug: bool = typer.Option(False, help="Enable debug logging"),
     quiet: bool = typer.Option(False, help="Suppress output to stdout"),
@@ -112,9 +114,15 @@ def generate(
         if not quiet:
             print(summary)
 
-        if save:
+        if save_markdown or save_pdf:
             out_path = resolve_output_path(save_path, target_date)
+
+        if save_markdown:
             out_path.write_text(summary)
+
+        if save_pdf:
+            pdf_path = out_path.with_suffix(".pdf")
+            convert_markdown_to_pdf(summary, pdf_path)
 
     except Exception as e:
         handle_exception(e)

@@ -1,7 +1,7 @@
 [project]
 name = "vea"
 version = "0.1.0"
-description = "A CLI tool that generates a daily briefing from your Google Calendar, Gmail, Markdown journal files, Slack messages, and Todoist task list."
+description = "Generates a daily briefing from your Google Calendar, Gmail, Markdown journal files, Slack messages, and Todoist task list."
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
@@ -20,6 +20,7 @@ dependencies = [
   "pytz>=2022.1",
   "anthropic>=0.1.3",
   "google-generativeai>=0.8.5",
+  "weasyprint>=65.1"
 ]
 
 [project.scripts]
