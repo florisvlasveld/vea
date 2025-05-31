@@ -176,4 +176,4 @@ daily-brief generate --include-slack False
 
 ## A note from the author
 
-This tool, including this README, was 100% vibe-coded with ChatGPT 4o. Any bugs are probably just hallucinated features. 😄
+This tool, including this README, was 100% vibe-coded with ChatGPT 4o. Any bugs are probably just hallucinated features.

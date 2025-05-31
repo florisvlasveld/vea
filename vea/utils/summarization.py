@@ -17,7 +17,8 @@ from .output_utils import truncate_prompt
 
 logger = logging.getLogger(__name__)
 
-PROMPT_TEMPLATE_PATH = Path(__file__).parent / "vea_prompt.txt"
+APP_ROOT = Path(__file__).resolve().parents[2]
+PROMPT_TEMPLATE_PATH = APP_ROOT / "prompts" / "default.prompt"
 
 
 def load_prompt_template() -> str:
