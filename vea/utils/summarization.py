@@ -18,11 +18,11 @@ from .output_utils import truncate_prompt
 logger = logging.getLogger(__name__)
 
 APP_ROOT = Path(__file__).resolve().parents[2]
-PROMPT_TEMPLATE_PATH = APP_ROOT / "prompts" / "default.prompt"
+PROMPT_TEMPLATE_PATH = APP_ROOT / "vea" / "prompts" / "daily-default.prompt"
 
 
 def load_prompt_template() -> str:
-    """Load the detailed prompt template from file."""
+    """Load the default prompt template from file."""
     with open(PROMPT_TEMPLATE_PATH, encoding="utf-8") as f:
         return f.read()
 

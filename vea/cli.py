@@ -66,6 +66,11 @@ def generate(
     if not skip_path_checks:
         check_required_directories(journal_dir, extra_dir, save_path)
 
+    prompt_path = Path(__file__).parent / "prompts" / "daily-default.prompt"
+    if not prompt_path.is_file():
+        typer.echo(f"Error: Default prompt file does not exist: {prompt_path}", err=True)
+        raise typer.Exit(code=1)
+
     try:
         target_date = parse_date(date)
 
