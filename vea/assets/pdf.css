@@ -1,62 +1,146 @@
+/* Page */
+
 @page {
   margin-top: 1.5cm;
-  margin-right: 1.8cm;
-  margin-bottom: 1.8cm;
-  margin-left: 1.8cm;
+  margin-right: 1.7cm;
+  margin-bottom: 1.5cm;
+  margin-left: 1.7cm;
 }
 
 body {
   font-family: "Bear Sans UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 12pt;
-  line-height: 1.5;
+  font-size: 11.5pt;
+  line-height: 1.4;
   color: #1c1c1e;
   background-color: white;
   word-wrap: break-word;
 }
 
+
+/* Headers */
+
 h1, h2, h3, h4, h5, h6 {
   font-family: "Bear Sans UI Heading", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-weight: 600;
   color: #1a1a1a;
-  margin-top: 2em;
-  margin-bottom: 0.4em;
   line-height: 1.4;
 }
 
-h1 { font-size: 24pt; }
-h2 { font-size: 20pt; }
-h3 { font-size: 16pt; }
+h1 {
+  margin-top: 2em;
+  margin-bottom: 0.4em;
+}
+
+h2 {
+  margin-top: 2em;
+  margin-bottom: 0.4em;
+}
+
+h3, h4, h5, h6 {
+  margin-top: 1em;
+  margin-bottom: 0.4em;
+}
+
+h1 { font-size: 23pt; }
+h2 { font-size: 19pt; }
+h3 { font-size: 15pt; }
+
+body > h1:first-of-type {
+  margin-top: 0.2em;
+}
+
+
+/* Paragraph */
 
 p {
   margin: 0.7em 0;
 }
 
+
+/* Regular lists */
+
 ul, ol {
-  margin: 1em 0 1em 1.5em;
-  padding: 0;
+  margin: 1em 0em 1em 0em;
 }
 
 li {
+  margin: 0.4em 0em 0.4em 0em;
+}
+
+/* Ensure spacing within multi-paragraph list items */
+li > p {
   margin: 0.4em 0;
 }
 
-li p {
-  margin: 0;
-}
-
+/* Blue bullets and numbers */
 ul li::marker,
 ol li::marker {
   color: #3478f6;
 }
+
+
+/* Nested lists */
+
+/* Nested list spacing */
+li li {
+  margin-top: 0.2em;
+  margin-bottom: 0.2em;
+}
+
+/* Improve nested list indentation */
+ul ul, ol ol, ul ol, ol ul {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+
+/* Task lists */
+
+li.task-item {
+  list-style-type: none;
+  position: relative;
+  word-break: break-word;
+}
+
+/*
+li.task-item::before {
+  content: "☐";
+  position: absolute;
+  left: -1em;
+  top: 0.1em;
+  font-size: 13pt;
+  color: #3478f6;
+}
+*/
+
+li.task-item::before {
+  content: "☐";
+  position: absolute;
+  left: -1em;
+  font-size: 13pt;
+  color: #3478f6;
+}
+
+li.task-item.done::before {
+  content: "☑";
+  color: #aaa;
+}
+
+li.task-item.done {
+  color: #999;
+  text-decoration: line-through;
+}
+
+
+/* Links */
 
 a {
   color: #3478f6;
   text-decoration: none;
 }
 
-a:hover {
-  text-decoration: underline;
-}
+
+/* Decoration */
 
 strong {
   font-weight: 600;
@@ -65,9 +149,14 @@ strong {
 
 code {
   font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 11pt;
   background-color: #f2f2f7;
   padding: 0.1em 0.3em;
-  border-radius: 3px;
+  border-radius: 8px;
+}
+
+em {
+    font-style: normal;
 }
 
 pre {
@@ -85,34 +174,6 @@ blockquote {
   margin: 1.5em 0;
 }
 
-/* Task list formatting */
-li.task-item {
-  list-style-type: none;
-  position: relative;
-  padding-left: 1.8em;
-  margin: 1em 0;
-  line-height: 1.6;
-  word-break: break-word;
-}
-
-li.task-item::before {
-  content: "☐";
-  position: absolute;
-  left: 0;
-  top: 0.1em;
-  font-size: 13pt;
-  color: #888;
-}
-
-li.task-item.done::before {
-  content: "☑";
-  color: #aaa;
-}
-
-li.task-item.done {
-  color: #999;
-  text-decoration: line-through;
-}
 
 /* Section break */
 hr {

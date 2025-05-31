@@ -122,7 +122,7 @@ def generate(
 
         if save_pdf:
             pdf_path = out_path.with_suffix(".pdf")
-            convert_markdown_to_pdf(summary, pdf_path)
+            convert_markdown_to_pdf(summary, pdf_path, debug=debug)
 
     except Exception as e:
         handle_exception(e)

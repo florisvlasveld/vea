@@ -12,7 +12,7 @@ _Important note: If you come across a mention of `Vea` or `[[Vea]]` in the journ
 
 # Preparation Notes ({date})
 
-1. **Events**
+## 1. Events
    - List calendar events for {date}, including start times. Do **not** include event descriptions.
    - Show the event time in bold (e.g., **09:00:**, or **All-day:**) followed by the event title in normal font.
    - Only mention timezones if events occur in different timezones where the time differs.
@@ -21,7 +21,7 @@ _Important note: If you come across a mention of `Vea` or `[[Vea]]` in the journ
    - Show the leader's attendance status **only if it is 'tentative'**.
    - Do **not** include participant lists.
 
-2. **Tasks**
+## 2. Tasks
    - Start with tasks from the structured list.
    - Also extract any **clear, actionable tasks** that the leader is responsible for from **emails** in `inbox`. **Exclude emails in `sent`**.
      - These include follow-ups, reviews, decisions, or requests that imply the leader needs to act.
@@ -29,7 +29,7 @@ _Important note: If you come across a mention of `Vea` or `[[Vea]]` in the journ
      - If a task is already in the structured list, **do not duplicate it**.
      - Do **not** extract tasks from Journal entries and the Additional Information.
      - Use your judgment to assign a **short, clear title** and a **priority** (as a number: 1 = highest, 4 = lowest).
-   - Group all tasks into three categories:
+   - Group all tasks into three h3-level categories:
      - **Due Today**
      - **Overdue** (also show how many days overdue, in *italics*)
      - **Extracted from Email** (if any, otherwise skip)
@@ -37,12 +37,14 @@ _Important note: If you come across a mention of `Vea` or `[[Vea]]` in the journ
      - Priority (as a number: 1 = highest, 4 = lowest)
      - Title
    - Sort tasks in all categories by priority (from highest to lowest).
-   - Render each task as a Markdown checkbox (e.g., `- [ ]`) followed by the task text.
-     - Format as: `- [ ] **Priority X:** Task title`
+   - Render each task bullet item as a Markdown checkbox followed by the task text, e.g., `- [ ] **Priority X:** Task title`.
 
-3. **Actionable Insights for Today’s Events and Tasks**
-   - For each calendar event and each task **due today** (skip overdue tasks), generate **the most useful 1 to 4 actionable insights**, depending on what is genuinely helpful. 
+## 3. Insights for Today’s Events and Tasks
+   - For each **calendar event** and each **task due today** (skip overdue tasks), generate **the most useful 1 to 4 actionable insights**, depending on what is genuinely helpful. 
      - Only include an insight if it adds meaningful value — do not pad the list just to reach four items.
+   - Group all insights into two h3-level categories:
+     - **Events**
+     - **Tasks Due Today**
    - Each insight should help the leader **prepare, decide, communicate, or act more effectively**, offering **specific, time-sensitive advice**. Focus on what is **decision-relevant, interpersonally important, or politically/emotionally sensitive** — avoid high-level summaries or generic observations.
    - Prioritize guidance, reminders, and risks relevant to:
      - relationships (e.g., sensitivities or history with participants)
@@ -61,10 +63,9 @@ _Important note: If you come across a mention of `Vea` or `[[Vea]]` in the journ
 
 **Style Guidelines:**
 - Use a clear, friendly, and concise tone.
-- **Make sure to always output correct Markdown syntaxs**
+- **Make sure to always output correct and valid Markdown syntax.**
 - When rendering bulleted lists, use exactly one space between the hyphen and the content. Format must be: `- Item`.
 - Do not use multiple spaces after a hyphen in bullet lists or checkboxes (e.g., avoid `-   Item` or `-   [ ] Task`).
-- **Do not insert blank lines between bullet points.** Bullet items must appear one after another with no empty line in between.
 - Use bold sparingly and only where already instructed.
 - Do **not** include `markdown` as the first word in the output.
 - Do not add any introductionary remarks or commentary.
