@@ -18,7 +18,7 @@ credentials/client_secret.json
 You only need to do this once per environment.
 
 ```bash
-daily-brief auth calendar gmail
+vea auth calendar gmail
 ```
 
 > This will open a browser window for Google OAuth. Tokens are saved in `.credentials/`.
@@ -55,7 +55,7 @@ pip install -e .
 ⚠️ Note: Depending on how much data is being processed (calendar events, emails, tasks, notes, Slack messages), generating your daily brief may take several minutes or even significantly longer to complete. Some models may not be able to handle the amount of input data.
 
 ```bash
-daily-brief generate \
+vea generate \
   --journal-dir ~/Logseq/journals \
   --extra-dir ~/Logseq/pages \
   --date 2025-05-26 \
@@ -75,7 +75,7 @@ daily-brief generate \
 - `--quiet`: Suppress printing output to the console
 - `--debug`: Outputs debug information to the console
 
-Run `daily-brief generate --help` to view all available options.
+Run `vea generate --help` to view all available options.
 
 ### AI Summary Engine
 
@@ -167,10 +167,10 @@ SLACK_TOKEN=xoxb-your-bot-token
 
 ### 5. Enable Slack loading
 
-By default, Slack loading is enabled when you run `daily-brief generate`. If you want to skip it:
+By default, Slack loading is enabled when you run `vea generate`. If you want to skip it:
 
 ```bash
-daily-brief generate --include-slack False
+vea generate --include-slack False
 ```
 
 
