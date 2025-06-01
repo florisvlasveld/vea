@@ -8,28 +8,26 @@ import typer
 from dotenv import load_dotenv
 
 from vea.loaders import gcal, gmail, journals, extras, todoist, slack as slack_loader
+from vea.loaders.journals import load_journals
+from vea.loaders.extras import load_extras
 from vea.auth import authorize
-from vea.utils.date_utils import parse_date
+
+from vea.utils.date_utils import parse_date, parse_week_input
 from vea.utils.output_utils import resolve_output_path
 from vea.utils.error_utils import enable_debug_logging, handle_exception
-from vea.utils.summarization import summarize
+from vea.utils.summarization import summarize_daily, summarize_weekly
 from vea.utils.pdf_utils import convert_markdown_to_pdf
+from vea.utils.generic_utils import check_required_directories
 
-app = typer.Typer(help="Vea: Generate a personalized daily briefing.")
+
+app = typer.Typer(help="Vea: Generate a personalized daily briefing or weekly summary.")
 
 load_dotenv()
 
 
-def check_required_directories(journal_dir: Optional[str], extras_dir: Optional[str], save_path: Optional[str]) -> None:
-    for path_name, path in [('journal_dir', journal_dir), ('extras_dir', extras_dir), ('save_path', save_path)]:
-        if path and not os.path.isdir(path):
-            typer.echo(f"Error: Provided path for {path_name} does not exist: {path}", err=True)
-            raise typer.Exit(code=1)
-
-
 @app.command("auth")
 def auth_command(
-    scopes: List[str] = typer.Argument(..., help="Services to authorize (e.g., calendar gmail)")
+    scopes: List[str] = typer.Argument(..., help="Services to authorize (e.g., `calendar gmail`)")
 ) -> None:
     try:
         authorize(scopes)
@@ -40,32 +38,31 @@ def auth_command(
 @app.command("daily")
 def generate(
     date: str = typer.Option(datetime.today().strftime("%Y-%m-%d"), help="Date for the brief (YYYY-MM-DD)"),
-    save_markdown: bool = typer.Option(True, help="Save output to Markdown file"),
-    save_pdf: bool = typer.Option(False, help="Save output to PDF file"),
-    save_path: Optional[Path] = typer.Option(None, help="Custom path or directory to save the output"),
-    debug: bool = typer.Option(False, help="Enable debug logging"),
-    quiet: bool = typer.Option(False, help="Suppress output to stdout"),
     journal_dir: Optional[Path] = typer.Option(None, help="Directory with Markdown journal files"),
     journal_days: int = typer.Option(21, help="Number of past days of journals to include"),
-    extra_dir: Optional[Path] = typer.Option(None, help="Directory with additional Markdown files"),
-    extra_labels: Optional[List[str]] = typer.Option(None, help="List of additional Gmail labels to fetch emails from"),
-    model: str = typer.Option("gemini-2.5-pro-preview-05-06", help="Model to use for summarization (OpenAI, Google Gemini, or Anthropic)"),
-    todoist_token: Optional[str] = typer.Option(None, help="Todoist API token (or set TODOIST_TOKEN in env)"),
-    project_name: Optional[str] = typer.Option(None, help="Name of the Todoist project to filter tasks by"),
+    extras_dir: Optional[Path] = typer.Option(None, help="Directory with additional Markdown files"),
+    gmail_labels: Optional[List[str]] = typer.Option(None, help="List of additional Gmail labels to fetch emails from"),
+    todoist_project: Optional[str] = typer.Option(None, help="Name of the Todoist project to filter tasks by"),
     my_email: Optional[str] = typer.Option(None, help="Your email address to filter declined calendar events"),
     include_slack: bool = typer.Option(True, help="Include recent Slack messages"),
     calendar_blacklist: Optional[List[str]] = typer.Option(
         None,
         help="Comma-separated list of keywords to blacklist from calendar events (overrides CALENDAR_EVENT_BLACKLIST)"
     ),
-    skip_path_checks: bool = typer.Option(False, help="Skip checks for input/output directory existence"),
+    save_markdown: bool = typer.Option(True, help="Save output to Markdown file"),
+    save_pdf: bool = typer.Option(False, help="Save output to PDF file"),
+    save_path: Optional[Path] = typer.Option(None, help="Custom file path or directory to save the output"),
+    model: str = typer.Option("gemini-2.5-pro-preview-05-06", help="Model to use for summarization (OpenAI, Google Gemini, or Anthropic)"),
+    skip_path_checks: bool = typer.Option(False, help="Skip checks for existence of input and output paths"),
+    debug: bool = typer.Option(False, help="Enable debug logging"),
+    quiet: bool = typer.Option(False, help="Suppress output to stdout"),
 ) -> None:
 
     if debug:
         enable_debug_logging()
 
     if not skip_path_checks:
-        check_required_directories(journal_dir, extra_dir, save_path)
+        check_required_directories(journal_dir, extras_dir, save_path)
 
     prompt_path = Path(__file__).parent / "prompts" / "daily-default.prompt"
     if not prompt_path.is_file():
@@ -74,11 +71,7 @@ def generate(
 
     try:
         target_date = parse_date(date)
-
-        calendars = gcal.load_events(target_date, my_email=my_email, blacklist=calendar_blacklist)
-        tasks = todoist.load_tasks(target_date, todoist_token or os.getenv("TODOIST_TOKEN", ""), project_name or "")
-        emails = gmail.load_emails(target_date, extra_labels=extra_labels)
-        extras_data = extras.load_extras([extra_dir] if extra_dir else [])
+        extras_data = extras.load_extras([extras_dir] if extras_dir else [])
         alias_map = extras.build_alias_map(extras_data)
         journals_data = (
             journals.load_journals(
@@ -90,11 +83,13 @@ def generate(
             if journal_dir
             else []
         )
+        calendars = gcal.load_events(target_date, my_email=my_email, blacklist=calendar_blacklist)
+        tasks = todoist.load_tasks(target_date, os.getenv("TODOIST_TOKEN", ""), todoist_project or "")
+        emails = gmail.load_emails(target_date, gmail_labels=gmail_labels)
         slack_data = slack_loader.load_slack_messages() if include_slack else {}
-
         bio = os.getenv("BIO", "")
 
-        summary = summarize(
+        summary = summarize_daily(
             model=model,
             date=target_date,
             emails=emails,
@@ -120,6 +115,74 @@ def generate(
         if save_pdf:
             pdf_path = out_path.with_suffix(".pdf")
             convert_markdown_to_pdf(summary, pdf_path, debug=debug)
+
+    except Exception as e:
+        handle_exception(e)
+
+
+@app.command("weekly")
+def generate_weekly_summary(
+    week: str = typer.Option(datetime.today().strftime("%Y-%m-%d"), help="Week (e.g., 2025-W22, 2025-22, 22, or 2025-05-28)"),
+    journal_dir: Optional[Path] = typer.Option(None, help="Directory with Markdown journal files"),
+    journal_days: int = typer.Option(21, help="Number of past days of journals to include"),
+    extras_dir: Optional[Path] = typer.Option(None, help="Directory with additional Markdown files"),
+    save_markdown: bool = typer.Option(False, help="Save output as markdown file."),
+    save_pdf: bool = typer.Option(False, help="Save output as PDF."),
+    save_path: Optional[str] = typer.Option(None, help="Optional override path to save output."),
+    model: str = typer.Option("gemini-2.5-pro-preview-05-06", help="Model to use for summarization (OpenAI, Google Gemini, or Anthropic)"),
+    skip_path_checks: bool = typer.Option(False, help="Skip path existence checks."),
+    debug: bool = typer.Option(False, help="Enable debug logging"),
+    quiet: bool = typer.Option(False, help="Suppress output to stdout"),
+):
+
+    if debug:
+        enable_debug_logging()
+
+    if not skip_path_checks:
+        check_required_directories(journal_dir, extras_dir, save_path)
+
+    prompt_path = Path(__file__).parent / "prompts" / "weekly-default.prompt"
+    if not prompt_path.is_file():
+        typer.echo(f"Error: Default prompt file does not exist: {prompt_path}", err=True)
+        raise typer.Exit(code=1)
+
+    try:
+        week_start, week_end = parse_week_input(week)
+        all_journals = load_journals(journal_dir, target_date=week_end)
+        extras_paths = [Path(extras_dir)] if extras_dir else []
+        all_extras = load_extras(extras_paths)
+
+        for e in all_journals:
+            if "date" not in e:
+                print("Malformed journal entry:", e)
+
+        # Prioritize in-week entries
+        journal_in_week = lambda e: "date" in e and week_start <= e["date"] <= week_end
+        journals_data = "\n\n".join(e["content"] for e in all_journals if journal_in_week(e))
+        extras_data = "\n\n".join(e["content"] for e in all_extras)
+        bio = os.getenv("BIO", "")
+
+        summary = summarize_weekly(
+            model=model, 
+            journals=journals_data, 
+            extras=extras_data, 
+            bio=bio,
+            quiet=quiet,
+            debug=debug,
+        )
+
+        if not quiet:
+                print(summary)
+
+        if save_markdown or save_pdf:
+            filename = f"{week_start.isocalendar().year}-W{week_start.isocalendar().week:02d}"
+            md_path = Path(save_path) / f"{filename}.md" if save_path else resolve_output_path(Path("."), week_start).with_name(f"{filename}.md")
+            
+            if save_markdown:
+                md_path.write_text(summary, encoding="utf-8")
+            
+            if save_pdf:
+                convert_markdown_to_pdf(summary, md_path.with_suffix(".pdf"))
 
     except Exception as e:
         handle_exception(e)

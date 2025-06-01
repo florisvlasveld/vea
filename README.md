@@ -57,25 +57,39 @@ pip install -e .
 ```bash
 vea daily \
   --journal-dir ~/Logseq/journals \
-  --extra-dir ~/Logseq/pages \
+  --extras-dir ~/Logseq/pages \
   --date 2025-05-26 \
   --save-path ~/DailyBrief/ \
-  --project-name "My Todoist Project" \
+  --todoist-project "My Todoist Project" \
   --calendar-blacklist "Lunch, Focus time" \
-  --debug
+  --save-markdown
 ```
 
 ### Key options
 
 - `--journal-dir`: Directory with Markdown journal files (named like `YYYY-MM-DD.md`)
-- `--extra-dir`: Directory with extra `.md` files (e.g. notes, projects)
-- `--project-name`: Filter tasks by Todoist project
+- `--extras-dir`: Directory with extra `.md` files (e.g. notes, projects)
+- `--todoist_project`: Filter tasks by Todoist project
 - `--calendar-blacklist`: Additional substrings to filter out calendar events (adds to .env)
 - `--model`: Use a specific LLM (e.g., `o4-mini`, `claude-3-7-sonnet-latest`, or `gemini-2.5-pro-preview-05-06`)
 - `--quiet`: Suppress printing output to the console
 - `--debug`: Outputs debug information to the console
+- `--save-markdown`: Saves the generated daily brief in Markdown format
+- `--save-pdf`: Saves the generated daily brief in PDF format
 
 Run `vea daily --help` to view all available options.
+
+### Weekly summaries
+
+You can also generate a weekly summary (a so-called “weekly heartbeat”) using:
+
+```bash
+vea weekly --week=22 --journal-dir ~/Logseq/journals --extras-dir ~/Logseq/pages --save-markdown
+```
+
+The `weekly` command supports input like `2025-W22`, `2025-22`, just `22` (current year assumed), or a date such as `2025-05-28`.
+
+This will produce a concise, narrative-style summary of the week’s activities, based on your journal and extras entries. The output can be saved as a Markdown and/or PDF file.
 
 ### AI Summary Engine
 
@@ -92,7 +106,7 @@ Then it asks your model of choice to create a concise, structured daily brief.
 
 ### Vea Instructions in Today’s Journal
 
-You can give special instructions to the AI by writing a note to `Vea` in **today’s journal entry**.
+You can give special instructions to the AI for the daily briefing by writing a note to `Vea` in **today’s journal entry**.
 
 Add a bullet starting with `Vea` or `[[Vea]]` in your Markdown journal file:
 
@@ -112,12 +126,12 @@ These instructions are:
 > - “Vea, remind me to be diplomatic in the meeting with John.”
 > - “Vea, include a summary of the [[Monthly Report]].”
 
-🪄 This is a powerful way to tailor your daily brief without changing any code.
+This is a powerful way to tailor your daily brief without changing any code.
 
 
 ## Slack Integration
 
-To include relevant messages from Slack in your daily brief, you'll need to create and install a Slack App that can access channel history.
+To include relevant messages from Slack in your daily briefing, you'll need to create and install a Slack App that can access channel history.
 
 ### 1. Create a Slack App
 

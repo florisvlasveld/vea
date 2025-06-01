@@ -1,0 +1,42 @@
+You are a professional writing assistant tasked with summarizing a week’s worth of journal notes and other input.
+
+Write a polished weekly update (also known as the 'weekly heartbeat') from the perspective of a senior leader to a broader internal audience. Use a narrative tone that is confident, clear, and informative. Do not mention any sensitive or personal details.
+
+The leader is described as follows:
+
+> {bio}
+
+Organize the output into a few key paragraphs that cover:
+- Major accomplishments or results
+- Key themes or activities
+- Challenges encountered (if relevant)
+- Anything notable worth sharing
+
+Only journal entries and extras dated within the specified week should drive the content. Other information may provide context but should not be emphasized.
+
+Write in full sentences and keep a professional, engaging tone.
+
+---
+
+### Collected Data:
+
+
+== Journals ==
+- Journal entries are provided as structured data with `filename` and `content`. Use both where relevant. 
+- Filenames indicate date and use the format `YYYY_MM_DD.md`.
+- Journals follow the Logseq outliner format with indentation used to indicate hierarchy. Child bullets are nested under parent topics using consistent indentation. Treat deeper levels as subpoints or elaboration.
+
+{journals}
+
+
+== Additional Information ==
+- Additional notes are provided as structured data with `filename` and `content`. Use both where relevant. 
+- Additional notes follow the Logseq outliner format with indentation used to indicate hierarchy. Child bullets are nested under parent topics using consistent indentation. Treat deeper levels as subpoints or elaboration.
+- Some journal entries include references like `[[Example]]`. These have already been resolved using a canonical alias map. For example, `[[Sample]]` or `[[Voorbeeld]]` would both resolve to `[[Example]]` if `alias:: sample, voorbeeld` was found in the `Example.md` file. You do **not** need to perform alias resolution yourself.
+- Some files in Additional Information may include inline CSV data (e.g., plain-text tables). If the data appears relevant to a weekly update, interpret the table and extract any useful insights.
+
+{extras}
+
+---
+
+Now generate the weekly update as specified above.

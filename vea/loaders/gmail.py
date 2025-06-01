@@ -17,7 +17,7 @@ SNIPPET_SIZE = 500
 MAX_BODY_LENGTH = 2000
 
 
-def load_emails(target_date: datetime.date, token_unused: Optional[str] = None, extra_labels: Optional[List[str]] = None) -> Dict[str, List[Dict[str, str]]]:
+def load_emails(target_date: datetime.date, token_unused: Optional[str] = None, gmail_labels: Optional[List[str]] = None) -> Dict[str, List[Dict[str, str]]]:
     """
     Load email snippets from Gmail. Returns a dict with 'inbox', 'sent', and any extra labels as keys.
     """
@@ -43,8 +43,8 @@ def load_emails(target_date: datetime.date, token_unused: Optional[str] = None, 
         "sent": unique_snippets(sent_msgs),
     }
 
-    if extra_labels:
-        for label in extra_labels:
+    if gmail_labels:
+        for label in gmail_labels:
             label_msgs = _list_messages(service, "me", f"label:{label}", MAX_INBOX)
             result[label] = unique_snippets(label_msgs)
 

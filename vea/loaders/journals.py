@@ -43,7 +43,7 @@ def load_journals(
             date_str = path.stem.replace("_", "-")
             file_date = datetime.strptime(date_str, "%Y-%m-%d").date()
 
-            if cutoff_date <= file_date <= target_date and path.stat().st_size <= MAX_SIZE:    
+            if (target_date is None or file_date <= target_date) and file_date >= cutoff_date and path.stat().st_size <= MAX_SIZE:    
                 content = path.read_text(encoding="utf-8")
 
                 # If target_date is set, remove lines beginning with '- [[Vea]]' from other dates
@@ -58,7 +58,8 @@ def load_journals(
 
                 entries.append({
                     "filename": path.stem,
-                    "content": content
+                    "content": content,
+                    "date": file_date
                 })
         except Exception as e:
             logger.warning(f"Skipping file {path} due to error: {e}", exc_info=e)

@@ -60,7 +60,7 @@ def get_project_and_subproject_ids(api: TodoistAPI, root_project_id: str) -> Set
     return all_ids
 
 
-def load_tasks(target_date: date, token: str, project_name: Optional[str] = None) -> List[dict]:
+def load_tasks(target_date: date, token: str, todoist_project: Optional[str] = None) -> List[dict]:
     """
     Load tasks from Todoist that are due on or before the target date.
     Optionally filter by a project name.
@@ -72,8 +72,8 @@ def load_tasks(target_date: date, token: str, project_name: Optional[str] = None
     api = TodoistAPI(token)
 
     project_ids: Optional[Set[str]] = None
-    if project_name:
-        root_project_id = get_project_id_by_name(api, project_name)
+    if todoist_project:
+        root_project_id = get_project_id_by_name(api, todoist_project)
         if not root_project_id:
             return []
         project_ids = get_project_and_subproject_ids(api, root_project_id)
