@@ -55,7 +55,7 @@ pip install -e .
 ⚠️ Note: Depending on how much data is being processed (calendar events, emails, tasks, notes, Slack messages), generating your daily brief may take several minutes or even significantly longer to complete. Some models may not be able to handle the amount of input data.
 
 ```bash
-vea generate \
+vea daily \
   --journal-dir ~/Logseq/journals \
   --extra-dir ~/Logseq/pages \
   --date 2025-05-26 \
@@ -75,7 +75,7 @@ vea generate \
 - `--quiet`: Suppress printing output to the console
 - `--debug`: Outputs debug information to the console
 
-Run `vea generate --help` to view all available options.
+Run `vea daily --help` to view all available options.
 
 ### AI Summary Engine
 
@@ -167,10 +167,10 @@ SLACK_TOKEN=xoxb-your-bot-token
 
 ### 5. Enable Slack loading
 
-By default, Slack loading is enabled when you run `vea generate`. If you want to skip it:
+By default, Slack loading is enabled when you run `vea daily`. If you want to skip it:
 
 ```bash
-vea generate --include-slack False
+vea daily --include-slack False
 ```
 
 

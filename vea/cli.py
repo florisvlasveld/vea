@@ -37,7 +37,7 @@ def auth_command(
         handle_exception(e)
 
 
-@app.command("generate")
+@app.command("daily")
 def generate(
     date: str = typer.Option(datetime.today().strftime("%Y-%m-%d"), help="Date for the brief (YYYY-MM-DD)"),
     save_markdown: bool = typer.Option(True, help="Save output to Markdown file"),
