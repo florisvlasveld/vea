@@ -50,7 +50,6 @@ def generate(
     extra_dir: Optional[Path] = typer.Option(None, help="Directory with additional Markdown files"),
     extra_labels: Optional[List[str]] = typer.Option(None, help="List of additional Gmail labels to fetch emails from"),
     model: str = typer.Option("gemini-2.5-pro-preview-05-06", help="Model to use for summarization (OpenAI, Google Gemini, or Anthropic)"),
-    openai_key: Optional[str] = typer.Option(None, help="OpenAI API key (or set OPENAI_KEY in env)"),
     todoist_token: Optional[str] = typer.Option(None, help="Todoist API token (or set TODOIST_TOKEN in env)"),
     project_name: Optional[str] = typer.Option(None, help="Name of the Todoist project to filter tasks by"),
     my_email: Optional[str] = typer.Option(None, help="Your email address to filter declined calendar events"),
@@ -93,8 +92,6 @@ def generate(
         )
         slack_data = slack_loader.load_slack_messages() if include_slack else {}
 
-        if openai_key:
-            os.environ["OPENAI_API_KEY"] = openai_key
         bio = os.getenv("BIO", "")
 
         summary = summarize(
