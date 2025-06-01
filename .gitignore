@@ -33,3 +33,7 @@ htmlcov/
 *.tox/
 .cache/
 pytest_cache/
+
+# Custom
+generate_pdf.py
+
