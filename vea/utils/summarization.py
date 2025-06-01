@@ -80,15 +80,23 @@ def summarize_daily(
 
 
 def summarize_weekly(
-    model: str,   
-    journals: str,
+    model: str,
+    week: str,
+    journals_in_week: str,
+    journals_contextual: str,
     extras: str,
     bio: str = "",
     quiet: bool = False,
     debug: bool = False,
 ) -> str:
     template = load_prompt_template(APP_WEEKLY_PROMPT_PATH)
-    prompt = template.format(journals=(journals), extras=(extras), bio=bio)
+    prompt = template.format(
+        week=week,
+        journals_in_week=journals_in_week,
+        journals_contextual=journals_contextual,
+        extras=extras,
+        bio=bio
+    )
 
     if debug:
         logger.debug("========== BEGIN PROMPT ==========")

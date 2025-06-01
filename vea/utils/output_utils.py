@@ -7,23 +7,32 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def resolve_output_path(path: Optional[Path], target_date: date) -> Path:
+def resolve_output_path(
+    path: Optional[Path],
+    target_date: date,
+    custom_filename: Optional[str] = None
+) -> Path:
     """
-    Determine output file path: use given path or environment or default to ~/DailyBrief/YYYY-MM-DD.md.
+    Determine output file path: use given path or environment or default to ~/DailyBrief/{date}.md
     If the target file already exists, append a number suffix to avoid overwriting:
     e.g., "YYYY-MM-DD.md", "YYYY-MM-DD_(1).md", "YYYY-MM-DD_(2).md", etc.
+
+    If `custom_filename` is provided, it overrides the default date-based name.
     """
     path_str = str(path) if path else os.environ.get("SAVE_PATH")
+
     if path_str:
         path_obj = Path(path_str)
         if path_obj.is_dir():
-            base_path = path_obj / f"{target_date.isoformat()}.md"
+            base_name = custom_filename or f"{target_date.isoformat()}.md"
+            base_path = path_obj / base_name
         else:
             base_path = path_obj
     else:
         default_dir = Path.home() / "DailyBrief"
         default_dir.mkdir(parents=True, exist_ok=True)
-        base_path = default_dir / f"{target_date.isoformat()}.md"
+        base_name = custom_filename or f"{target_date.isoformat()}.md"
+        base_path = default_dir / base_name
 
     # If file exists, append _(1), _(2), etc.
     final_path = base_path

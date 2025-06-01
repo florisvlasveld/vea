@@ -2,7 +2,7 @@ import os
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 import typer
 from dotenv import load_dotenv
@@ -134,7 +134,6 @@ def generate_weekly_summary(
     debug: bool = typer.Option(False, help="Enable debug logging"),
     quiet: bool = typer.Option(False, help="Suppress output to stdout"),
 ):
-
     if debug:
         enable_debug_logging()
 
@@ -148,41 +147,45 @@ def generate_weekly_summary(
 
     try:
         week_start, week_end = parse_week_input(week)
-        all_journals = load_journals(journal_dir, target_date=week_end)
         extras_paths = [Path(extras_dir)] if extras_dir else []
         all_extras = load_extras(extras_paths)
+        alias_map = extras.build_alias_map(all_extras)
 
-        for e in all_journals:
-            if "date" not in e:
-                print("Malformed journal entry:", e)
+        all_journals = load_journals(journal_dir, journal_days=journal_days, alias_map=alias_map)
 
-        # Prioritize in-week entries
         journal_in_week = lambda e: "date" in e and week_start <= e["date"] <= week_end
-        journals_data = "\n\n".join(e["content"] for e in all_journals if journal_in_week(e))
-        extras_data = "\n\n".join(e["content"] for e in all_extras)
+        in_week = [e for e in all_journals if journal_in_week(e)]
+        contextual = [e for e in all_journals if not journal_in_week(e)]
+
+        journals_in_week = str(in_week)
+        journals_contextual = str(contextual)
+        extras_data = str(all_extras)
         bio = os.getenv("BIO", "")
 
         summary = summarize_weekly(
-            model=model, 
-            journals=journals_data, 
-            extras=extras_data, 
+            model=model,
+            week=f"{week_start.isocalendar().week:02d}",
+            journals_in_week=journals_in_week,
+            journals_contextual=journals_contextual,
+            extras=extras_data,
             bio=bio,
             quiet=quiet,
             debug=debug,
         )
 
         if not quiet:
-                print(summary)
+            print(summary)
 
         if save_markdown or save_pdf:
-            filename = f"{week_start.isocalendar().year}-W{week_start.isocalendar().week:02d}"
-            md_path = Path(save_path) / f"{filename}.md" if save_path else resolve_output_path(Path("."), week_start).with_name(f"{filename}.md")
-            
+            filename = f"{week_start.isocalendar().year}-W{week_start.isocalendar().week:02d}.md"
+            md_path = resolve_output_path(Path(save_path) if save_path else None, week_start, custom_filename=filename)
+
             if save_markdown:
                 md_path.write_text(summary, encoding="utf-8")
-            
+
             if save_pdf:
                 convert_markdown_to_pdf(summary, md_path.with_suffix(".pdf"))
 
     except Exception as e:
         handle_exception(e)
+
