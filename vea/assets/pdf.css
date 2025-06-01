@@ -1,184 +1,180 @@
-/* Page */
-
+/* === Page Setup === */
 @page {
-  margin-top: 1.5cm;
-  margin-right: 1.7cm;
-  margin-bottom: 1.5cm;
-  margin-left: 1.7cm;
+  margin: 1.8cm 2cm;
 }
 
 body {
   font-family: "Bear Sans UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 11.5pt;
-  line-height: 1.4;
+  font-size: 14pt;
+  line-height: 1.4em;
   color: #1c1c1e;
-  background-color: white;
+  background: white;
   word-wrap: break-word;
+  hyphens: auto;
 }
 
 
-/* Headers */
-
-h1, h2, h3, h4, h5, h6 {
+/* === Headings === */
+h1, h2, h3 {
   font-family: "Bear Sans UI Heading", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-weight: 600;
   color: #1a1a1a;
   line-height: 1.4;
+  page-break-after: avoid;
 }
 
 h1 {
-  margin-top: 2em;
-  margin-bottom: 0.4em;
+  font-size: 26pt;
+  margin: 1.8em 0 0.4em 0;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 0.2em;
 }
 
 h2 {
-  margin-top: 2em;
-  margin-bottom: 0.4em;
+  font-size: 22pt;
+  margin: 1.5em 0 0.4em 0;
 }
 
-h3, h4, h5, h6 {
-  margin-top: 1em;
-  margin-bottom: 0.4em;
-}
-
-h1 { font-size: 23pt; }
-h2 { font-size: 19pt; }
-h3 { font-size: 15pt; }
-
-body > h1:first-of-type {
-  margin-top: 0.2em;
+h3 {
+  font-size: 18pt;
+  margin: 1.2em 0 0.3em 0;
 }
 
 
-/* Paragraph */
-
-p {
-  margin: 0.7em 0;
-}
-
-
-/* Regular lists */
-
+/* === Lists === */
 ul, ol {
-  margin: 1em 0em 1em 0em;
+  list-style-position: outside;
+  padding-left: 1.2em;
+  margin: 0.6em 0;
 }
 
 li {
-  margin: 0.4em 0em 0.4em 0em;
+  margin: 0.3em 0;
+  padding-left: 0.4em;
 }
 
-/* Ensure spacing within multi-paragraph list items */
-li > p {
+/* Experimentation! */
+
+ul li {
+  list-style: none;
+  text-indent: 0;
+  position: relative;
   margin: 0.4em 0;
 }
 
-/* Blue bullets and numbers */
-ul li::marker,
-ol li::marker {
-  color: #3478f6;
+ul li::before {
+  position: absolute;
+  left: -1em;
+  content: "•";
+  color: #2378C6;
+}
+
+/* ---------------- */
+
+ul li::marker {
+  font-size: 1em;
+  color: #2378C6;
 }
 
 
-/* Nested lists */
-
-/* Nested list spacing */
-li li {
-  margin-top: 0.2em;
-  margin-bottom: 0.2em;
-}
-
-/* Improve nested list indentation */
-ul ul, ol ol, ul ol, ol ul {
-  margin-top: 0.5em;
-  margin-bottom: 0.5em;
-}
-
-
-/* Task lists */
-
-li.task-item {
-  list-style-type: none;
+/* === Task Checkboxes === */
+.task-item {
+  list-style: none;
+  text-indent: 0;
   position: relative;
-  word-break: break-word;
+  margin: 0.4em 0;
 }
 
-/*
-li.task-item::before {
-  content: "☐";
+.task-item::before {
   position: absolute;
-  left: -1em;
-  top: 0.1em;
-  font-size: 13pt;
-  color: #3478f6;
+  left: -1.1em;
 }
-*/
 
-li.task-item::before {
+/* Unchecked task */
+.task-item.unchecked::before {
   content: "☐";
-  position: absolute;
-  left: -1em;
-  font-size: 13pt;
-  color: #3478f6;
+  color: #2378C6;
 }
 
-li.task-item.done::before {
+/* Checked task */
+.task-item.checked::before {
   content: "☑";
-  color: #aaa;
-}
-
-li.task-item.done {
-  color: #999;
-  text-decoration: line-through;
+  color: #007AFF;
 }
 
 
-/* Links */
+/* === Emphasis & Strong === */
+strong, b {
+  font-weight: 600;
+}
 
+em, i {
+  font-style: italic;
+}
+
+
+/* === Paragraphs and Spacing === */
+p {
+  margin: 0.4em 0;
+}
+
+p + ul,
+p + ol {
+  margin-top: -0.3em;
+}
+
+
+/* === Links === */
 a {
-  color: #3478f6;
+  color: #007AFF;
   text-decoration: none;
 }
 
-
-/* Decoration */
-
-strong {
-  font-weight: 600;
-  color: #000;
+a:hover {
+  text-decoration: underline;
 }
 
-code {
-  font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
-  font-size: 11pt;
-  background-color: #f2f2f7;
-  padding: 0.1em 0.3em;
+
+/* === Custom Sections (like Events, Tasks, etc.) === */
+section {
+  margin-bottom: 2em;
+}
+
+
+/* === Block Quotes === */
+blockquote {
+  margin: 1em 2em;
+  padding-left: 1em;
+  border-left: 3px solid #ccc;
+  color: #555;
+}
+
+
+/* === Code Blocks === */
+code, pre {
+  font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, "Courier New", monospace;
+  font-size: 0.7em;
+  background: #f6f6f6;
+  padding: 0.2em 0.4em;
   border-radius: 8px;
 }
 
-em {
-    font-style: normal;
-}
-
 pre {
-  background-color: #f2f2f7;
-  padding: 1em;
+  padding: 0.8em;
   overflow-x: auto;
-  border-radius: 4px;
-  font-size: 11pt;
-}
-
-blockquote {
-  border-left: 4px solid #e0e0e0;
-  padding-left: 1em;
-  color: #666;
-  margin: 1.5em 0;
 }
 
 
-/* Section break */
-hr {
-  border: none;
-  height: 1px;
-  background: #ddd;
-  margin: 2em 0;
+/* === Tables === */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  font-size: 12pt;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 0.4em 0.6em;
+  text-align: left;
 }

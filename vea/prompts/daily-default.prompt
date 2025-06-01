@@ -31,7 +31,7 @@ _Important note: If you come across a mention of `Vea` or `[[Vea]]` in the journ
      - Use your judgment to assign a **short, clear title** and a **priority** (as a number: 1 = highest, 4 = lowest).
    - Group all tasks into three h3-level categories:
      - **Due Today**
-     - **Overdue** (also show how many days overdue, in *italics*)
+     - **Overdue** (also show how many days overdue, in _italics_)
      - **Extracted from Email** (if any, otherwise skip)
    - For each task, include:
      - Priority (as a number: 1 = highest, 4 = lowest)
@@ -42,6 +42,10 @@ _Important note: If you come across a mention of `Vea` or `[[Vea]]` in the journ
 ## 3. Insights for Today’s Events and Tasks
    - For each **calendar event** and each **task due today** (skip overdue tasks), generate **the most useful 1 to 4 actionable insights**, depending on what is genuinely helpful. 
      - Only include an insight if it adds meaningful value — do not pad the list just to reach four items.
+     - **Format**:
+       - Render the event or task title as **bold, non-list text** on its own line (e.g., `**Title of an item**`).
+       - Follow the title with 1–4 bullet points (level-1 list items) showing helpful, actionable insights.
+       - Do **not** include the title as part of the bullet list.
    - Group all insights into two h3-level categories:
      - **Events**
      - **Tasks Due Today**
@@ -57,7 +61,7 @@ _Important note: If you come across a mention of `Vea` or `[[Vea]]` in the journ
    - Give more weight to **recent and marked entries** (`#notice`, `#alert`, `#observation`, `#important`).
    - Pay attention to items that **match the title or context** of the event/task (including approximate matches).
    - If two or more people have similar names, only use information for the one with an exact match.
-   - Following **each insight, cite its **source(s)** in *italics*. For **journal** and **additional information** sources, wrap the filename in **backticks** (e.g., `2025_05_01`). For **Slack messages**, wrap the channel name or DM identifier in **backticks**.
+   - Following **each insight, cite its **source(s)**. For **journal** and **additional information** sources, wrap the filename in **backticks** (e.g., `2025_05_01`). For **Slack messages**, wrap the channel name or DM identifier in **backticks**.
 
 ---
 
@@ -129,6 +133,13 @@ Each task is a dictionary with the following fields:
 - Additional notes are provided as structured data with `filename` and `content`. Use both where relevant. 
 - Additional notes follow the Logseq outliner format with indentation used to indicate hierarchy. Child bullets are nested under parent topics using consistent indentation. Treat deeper levels as subpoints or elaboration.
 - Some journal entries include references like `[[Example]]`. These have already been resolved using a canonical alias map. For example, `[[Sample]]` or `[[Voorbeeld]]` would both resolve to `[[Example]]` if `alias:: sample, voorbeeld` was found in the `Example.md` file. You do **not** need to perform alias resolution yourself.
+- Some files in Additional Information contain **Hogan personality profile data** in inline JSON format. These are individual assessments and may include values like `adjustment`, `Interpersonal Sensitivity`, `Learning Approach`, etc. 
+    - This data is only present if the file contains a bullet exactly matching `[[Hogan]] assessment data in JSON format`. The actual JSON data is nested under that bullet.
+    - If a person’s file does *not* include this bullet, you must assume no Hogan data is available and you must not generate any insight based on Hogan profile data for that person.
+    - If a person involved in the event or task **has** Hogan profile data, use this to fine-tune the generated insights. 
+    - **In particular**, if an event appears to be a **1-on-1 meeting** (e.g., the title contains `1:1`, `1-on-1`, `1on1`, or `one-on-one`) and Hogan data **is** available for the other person, **always add one additional insight** based on their Hogan profile. This should be rendered as a **separate bullet point following the regular insights**.
+        - This insight should be personality-informed guidance on how the leader can best communicate, influence, or collaborate with the person.
+        - Focus on interpersonal sensitivity, emotional tone, likely reactions, or potential derailers.
 - Some files in Additional Information may include inline CSV data (e.g., plain-text tables). If the data appears relevant to a task or event, interpret the table and extract any useful insights.
 
 {extras}

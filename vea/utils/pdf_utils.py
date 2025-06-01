@@ -30,14 +30,41 @@ def fix_multiline_list_items(md: str) -> str:
     return '\n'.join(fixed_lines)
 
 
+def insert_blank_line_before_lists(md: str) -> str:
+    """
+    Ensures that a blank line exists between a paragraph (e.g., bolded title)
+    and a following bullet list.
+    """
+    lines = md.splitlines()
+    fixed_lines = []
+
+    for i, line in enumerate(lines):
+        fixed_lines.append(line)
+        if line.strip().startswith("**") and i + 1 < len(lines):
+            next_line = lines[i + 1]
+            if re.match(r'^\s*[-*+] ', next_line):
+                fixed_lines.append('')  # Insert blank line
+
+    return '\n'.join(fixed_lines)
+
+
+def replace_double_brackets_with_strong(md: str) -> str:
+    """
+    Replaces all instances of [[...]] with <strong>...</strong>.
+    """
+    return re.sub(r'\[\[(.+?)\]\]', r'<strong>\1</strong>', md)
+
+
 def convert_markdown_to_pdf(summary: str, out_path: Path, debug: bool = False) -> None:
     css_path = Path(__file__).parent.parent / "assets" / "pdf.css"
 
-    # Preprocess: fix multi-line list items
+    # Preprocess
     summary = fix_multiline_list_items(summary)
+    summary = insert_blank_line_before_lists(summary)
+    summary = replace_double_brackets_with_strong(summary)
 
-    # Step 1: Convert Markdown to HTML with soft line breaks
-    html_content = markdown(summary, output_format='html5', extensions=['nl2br'])
+    # Step 1: Convert Markdown to HTML
+    html_content = markdown(summary, output_format='html5')  # 'nl2br' removed
 
     if debug:
         logger.debug("========== BEGIN MARKDOWN TO HTML OUTPUT ==========")
@@ -50,12 +77,12 @@ def convert_markdown_to_pdf(summary: str, out_path: Path, debug: bool = False) -
     # Step 3: Format task checkboxes
     html_content = re.sub(
         r'<li><p>\s*\[ \]\s*(.*?)</p></li>',
-        r'<li class="task-item"><p>\1</p></li>',
+        r'<li class="task-item unchecked"><p>\1</p></li>',
         html_content
     )
     html_content = re.sub(
         r'<li><p>\s*\[[xX]\]\s*(.*?)</p></li>',
-        r'<li class="task-item done"><p>\1</p></li>',
+        r'<li class="task-item checked"><p>\1</p></li>',
         html_content
     )
 
@@ -66,4 +93,3 @@ def convert_markdown_to_pdf(summary: str, out_path: Path, debug: bool = False) -
 
     # Step 4: Render PDF
     HTML(string=html_content).write_pdf(str(out_path), stylesheets=[CSS(filename=str(css_path))])
-    
