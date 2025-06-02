@@ -78,12 +78,12 @@ def summarize_daily(
         prompt_template,
         date=date,
         bio=bio,
-        calendars=json.dumps(calendars, indent=2, default=str),
-        tasks=json.dumps(tasks, indent=2, default=str),
-        emails=json.dumps(emails, indent=2, default=str),
-        journals=json.dumps(journals, indent=2, default=str),
-        extras=json.dumps(extras, indent=2, default=str),
-        slack=json.dumps(slack, indent=2, default=str) if slack else ""
+        calendars=json.dumps(calendars, indent=2, default=str, ensure_ascii=False),
+        tasks=json.dumps(tasks, indent=2, default=str, ensure_ascii=False),
+        emails=json.dumps(emails, indent=2, default=str, ensure_ascii=False),
+        journals=json.dumps(journals, indent=2, default=str, ensure_ascii=False),
+        extras=json.dumps(extras, indent=2, default=str, ensure_ascii=False),
+        slack=json.dumps(slack, indent=2, default=str, ensure_ascii=False) if slack else ""
     )
 
 
@@ -99,9 +99,9 @@ def summarize_daily(
 def summarize_weekly(
     model: str,
     week: str,
-    journals_in_week: str,
-    journals_contextual: str,
-    extras: str,
+    journals_in_week: List,
+    journals_contextual: List,
+    extras: List,
     bio: str = "",
     quiet: bool = False,
     debug: bool = False,
@@ -109,9 +109,9 @@ def summarize_weekly(
     template = load_prompt_template(APP_WEEKLY_PROMPT_PATH)
     prompt = template.format(
         week=week,
-        journals_in_week=journals_in_week,
-        journals_contextual=journals_contextual,
-        extras=extras,
+        journals_in_week=json.dumps(journals_in_week, indent=2, default=str, ensure_ascii=False),
+        journals_contextual=json.dumps(journals_contextual, indent=2, default=str, ensure_ascii=False),
+        extras=json.dumps(extras, indent=2, default=str, ensure_ascii=False),
         bio=bio
     )
 

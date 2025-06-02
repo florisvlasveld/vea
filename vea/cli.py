@@ -151,15 +151,17 @@ def generate_weekly_summary(
         all_extras = load_extras(extras_paths)
         alias_map = extras.build_alias_map(all_extras)
 
-        all_journals = load_journals(journal_dir, journal_days=journal_days, alias_map=alias_map)
+        all_journals = load_journals(
+            journal_dir,
+            journal_days=journal_days,
+            alias_map=alias_map,
+            latest_date=week_end  # <-- this ensures future entries are excluded
+        )
 
         journal_in_week = lambda e: "date" in e and week_start <= e["date"] <= week_end
-        in_week = [e for e in all_journals if journal_in_week(e)]
-        contextual = [e for e in all_journals if not journal_in_week(e)]
-
-        journals_in_week = List(in_week)
-        journals_contextual = List(contextual)
-        extras_data = List(all_extras)
+        journals_in_week = [e for e in all_journals if journal_in_week(e)]
+        journals_contextual = [e for e in all_journals if not journal_in_week(e)]
+        extras_data = all_extras
         bio = os.getenv("BIO", "")
 
         summary = summarize_weekly(

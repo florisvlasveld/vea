@@ -25,6 +25,7 @@ def load_journals(
     journal_days: int = 21,
     alias_map: Optional[Dict[str, str]] = None,
     target_date: Optional[datetime.date] = None,
+    latest_date: Optional[datetime.date] = None,
 ) -> List[Dict[str, str]]:
     """
     Load journal entries (Markdown files) within the past journal_days. If target_date is provided,
@@ -43,8 +44,17 @@ def load_journals(
             date_str = path.stem.replace("_", "-")
             file_date = datetime.strptime(date_str, "%Y-%m-%d").date()
 
-            if (target_date is None or file_date <= target_date) and file_date >= cutoff_date and path.stat().st_size <= MAX_SIZE:    
+            if (
+                (target_date is None or file_date <= target_date)
+                and file_date >= cutoff_date
+                and (latest_date is None or file_date <= latest_date)
+                and path.stat().st_size <= MAX_SIZE
+            ):   
                 content = path.read_text(encoding="utf-8")
+
+                if not content or content == "-":
+                    logger.debug(f"Excluded journal entry with trivial or empty content: {path.stem}")
+                    continue
 
                 # If target_date is set, remove lines beginning with '- [[Vea]]' from other dates
                 if target_date and file_date != target_date:

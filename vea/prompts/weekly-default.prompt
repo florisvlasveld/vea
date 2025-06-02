@@ -29,25 +29,22 @@ Use only journal entries from the **specified week** as the **primary input** fo
 
 ### Collected Data
 
-== Current Week Journal Entries ==
+== Current Week Journal Entries (JSON) ==
 Use these as your main input. Each entry includes:
 - `filename`: formatted as `YYYY_MM_DD`
-- `date`
 - `content`: written in **Logseq outliner format**, where indentation reflects hierarchy. Use child bullets as elaboration or subpoints.
+- `date`
+- Journals follow the Logseq outliner format with indentation used to indicate hierarchy. Child bullets are nested under parent topics using consistent indentation. Treat deeper levels as subpoints or elaboration.
 
 {journals_in_week}
 
-== Contextual Journal Entries ==
+== Contextual Journal Entries (JSON) ==
 These are outside the current week. Use them only to inform your understanding of ongoing topics or background context. Do not summarize or directly reference them unless essential.
 
 {journals_contextual}
 
-== Additional Notes ==
-These structured notes may include useful context, such as:
-- Logseq-style outliner content
-- Inline CSV (plain-text tables)
-
-Use these only if they provide relevant insights into the week’s events or themes.
+== Additional Notes (JSON) ==
+These structured notes may include useful context. Use these only if they provide relevant insights into the week’s events or themes.
 
 {extras}
 
