@@ -1,6 +1,7 @@
 import os
 import time
 import logging
+import json
 from datetime import date
 from pathlib import Path
 from typing import List, Dict, Optional, Union
@@ -43,6 +44,20 @@ def render_daily_prompt(
         slack=slack
     )
 
+'''
+prompt = render_daily_prompt(
+        prompt_template,
+        date=date,
+        bio=bio,
+        calendars=str(calendars),
+        tasks=str(tasks),
+        emails=str(emails),
+        journals=str(journals),
+        extras=str(extras),
+        slack=str(slack) if slack else ""
+    )
+'''
+
 
 def summarize_daily(
     model: str,
@@ -63,13 +78,15 @@ def summarize_daily(
         prompt_template,
         date=date,
         bio=bio,
-        calendars=str(calendars),
-        tasks=str(tasks),
-        emails=str(emails),
-        journals=str(journals),
-        extras=str(extras),
-        slack=str(slack) if slack else ""
+        calendars=json.dumps(calendars, indent=2, default=str),
+        tasks=json.dumps(tasks, indent=2, default=str),
+        emails=json.dumps(emails, indent=2, default=str),
+        journals=json.dumps(journals, indent=2, default=str),
+        extras=json.dumps(extras, indent=2, default=str),
+        slack=json.dumps(slack, indent=2, default=str) if slack else ""
     )
+
+
 
     if debug:
         logger.debug("========== BEGIN PROMPT ==========")

@@ -79,8 +79,7 @@ _Important note: If you come across a mention of `Vea` or `[[Vea]]` in the journ
 
 ### Collected Data:
 
-
-== Calendar Events ==
+== Calendar Events (JSON) ==
 Each calendar event is a dictionary with the following fields:
 - `summary`: the title of the event  
 - `start`: the ISO timestamp or date (if all-day)  
@@ -94,7 +93,7 @@ Each calendar event is a dictionary with the following fields:
 {calendars}
 
 
-== Tasks ==
+== Tasks (JSON) ==
 Each task is a dictionary with the following fields:
 - `content`: the task title  
 - `description`: optional longer task text  
@@ -105,7 +104,7 @@ Each task is a dictionary with the following fields:
 {tasks}
 
 
-== Emails ==
+== Emails (JSON) ==
 - Emails are structured with `subject`, `from` (sender), `date`, and `body`. Only plain text content is included.
 - In the JSON structure below, emails are in dinstinct categories, such as `inbox` and `sent`.
 - You may extract actionable tasks from these emails for inclusion in the Tasks section, if they are clearly addressed to the leader and require action. Emails in `sent` are **not** relevant for task extraction.
@@ -113,9 +112,9 @@ Each task is a dictionary with the following fields:
 {emails}
 
 
-== Journals ==
+== Journals (JSON) ==
 - Journal entries are provided as structured data with `filename` and `content`. Use both where relevant. 
-- Filenames indicate date and use the format `YYYY_MM_DD.md`.
+- Filenames indicate date and use the format `YYYY_MM_DD`.
 - Journals follow the Logseq outliner format with indentation used to indicate hierarchy. Child bullets are nested under parent topics using consistent indentation. Treat deeper levels as subpoints or elaboration.
 - If the journal entry for {date} contains a line that begins with `Vea` or `[[Vea]]`, treat it as a **binding instruction** written directly to you. These instructions may request:
     - additional sections or content to include
@@ -129,7 +128,7 @@ Each task is a dictionary with the following fields:
 {journals}
 
 
-== Additional Information ==
+== Additional Information (JSON) ==
 - Additional notes are provided as structured data with `filename` and `content`. Use both where relevant. 
 - Additional notes follow the Logseq outliner format with indentation used to indicate hierarchy. Child bullets are nested under parent topics using consistent indentation. Treat deeper levels as subpoints or elaboration.
 - Some journal entries include references like `[[Example]]`. These have already been resolved using a canonical alias map. For example, `[[Sample]]` or `[[Voorbeeld]]` would both resolve to `[[Example]]` if `alias:: sample, voorbeeld` was found in the `Example.md` file. You do **not** need to perform alias resolution yourself.
@@ -138,7 +137,7 @@ Each task is a dictionary with the following fields:
 {extras}
 
 
-== Slack Messages ==
+== Slack Messages (JSON) ==
 Slack messages are grouped by channel name or DM identifier. Each message includes:
 - `user`: the display name of the sender
 - `timestamp`: ISO timestamp

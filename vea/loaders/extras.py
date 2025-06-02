@@ -63,7 +63,7 @@ def load_extras(paths: Optional[List[Path]]) -> List[Dict[str, str]]:
 
                 content = file.read_text(encoding="utf-8")
                 if content.lstrip().lower().startswith("file::"):
-                    logger.info(f"Excluded file with 'file::' marker: {file}")
+                    logger.debug(f"Excluded file with 'file::' marker: {file}")
                     continue
 
                 aliases = extract_aliases(content)

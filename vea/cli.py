@@ -157,9 +157,9 @@ def generate_weekly_summary(
         in_week = [e for e in all_journals if journal_in_week(e)]
         contextual = [e for e in all_journals if not journal_in_week(e)]
 
-        journals_in_week = str(in_week)
-        journals_contextual = str(contextual)
-        extras_data = str(all_extras)
+        journals_in_week = List(in_week)
+        journals_contextual = List(contextual)
+        extras_data = List(all_extras)
         bio = os.getenv("BIO", "")
 
         summary = summarize_weekly(
