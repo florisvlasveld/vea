@@ -106,7 +106,7 @@ Each task is a dictionary with the following fields:
 
 == Emails (JSON) ==
 - Emails are structured with `subject`, `from` (sender), `date`, and `body`. Only plain text content is included.
-- In the JSON structure below, emails are in dinstinct categories, such as `inbox` and `sent`.
+- In the JSON structure below, emails are in distinct categories, such as `inbox` and `sent`.
 - You may extract actionable tasks from these emails for inclusion in the Tasks section, if they are clearly addressed to the leader and require action. Emails in `sent` are **not** relevant for task extraction.
 
 {emails}
