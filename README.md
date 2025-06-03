@@ -69,7 +69,7 @@ vea daily \
 
 - `--journal-dir`: Directory with Markdown journal files (named like `YYYY-MM-DD.md`)
 - `--extras-dir`: Directory with extra `.md` files (e.g. notes, projects)
-- `--todoist_project`: Filter tasks by Todoist project
+- `--todoist-project`: Filter tasks by Todoist project
 - `--calendar-blacklist`: Additional substrings to filter out calendar events (adds to .env)
 - `--model`: Use a specific LLM (e.g., `o4-mini`, `claude-3-7-sonnet-latest`, or `gemini-2.5-pro-preview-05-06`)
 - `--quiet`: Suppress printing output to the console
