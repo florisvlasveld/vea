@@ -113,8 +113,7 @@ Each task is a dictionary with the following fields:
 
 
 == Journals (JSON) ==
-- Journal entries are provided as structured data with `filename` and `content`. Use both where relevant. 
-- Filenames indicate date and use the format `YYYY_MM_DD`.
+- Journal entries are provided as structured data with `filename`, `content`, and `date` (format `YYYY_MM_DD`).
 - Journals follow the Logseq outliner format with indentation used to indicate hierarchy. Child bullets are nested under parent topics using consistent indentation. Treat deeper levels as subpoints or elaboration.
 - If the journal entry for {date} contains a line that begins with `Vea` or `[[Vea]]`, treat it as a **binding instruction** written directly to you. These instructions may request:
     - additional sections or content to include
@@ -129,19 +128,21 @@ Each task is a dictionary with the following fields:
 
 
 == Additional Information (JSON) ==
-- Additional notes are provided as structured data with `filename` and `content`. Use both where relevant. 
+- Additional notes are provided as structured data with `filename`, `content`,  and 'aliases'.
 - Additional notes follow the Logseq outliner format with indentation used to indicate hierarchy. Child bullets are nested under parent topics using consistent indentation. Treat deeper levels as subpoints or elaboration.
-- Some journal entries include references like `[[Example]]`. These have already been resolved using a canonical alias map. For example, `[[Sample]]` or `[[Voorbeeld]]` would both resolve to `[[Example]]` if `alias:: sample, voorbeeld` was found in the `Example.md` file. You do **not** need to perform alias resolution yourself.
+- Some journal entries include references like `[[Example]]`. These have already been resolved using a canonical alias map. For example, `[[Sample]]` or `[[Voorbeeld]]` would both resolve to `[[Example]]` if `alias:: sample, voorbeeld` was found in the `Example.md` file.
 - Some files in Additional Information may include inline CSV data (e.g., plain-text tables). If the data appears relevant to a task or event, interpret the table and extract any useful insights.
 
 {extras}
 
 
 == Slack Messages (JSON) ==
-Slack messages are grouped by channel name or DM identifier. Each message includes:
-- `user`: the display name of the sender
-- `timestamp`: ISO timestamp
-- `text`: plain text content of the message
+- Slack messages are grouped by channel name or DM identifier. Each message includes:
+    - `user`: the display name of the sender
+    - `timestamp`: ISO timestamp
+    - `text`: plain text content of the message
+    - `replies` (if any): replies to the message
+- Message text may includes 'mentions', such as `@John Doe`.
 
 {slack}
 
