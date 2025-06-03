@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from typing import Optional
 import logging
+import typer
 
 logger = logging.getLogger(__name__)
 
