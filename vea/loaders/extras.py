@@ -63,7 +63,7 @@ def load_extras(paths: Optional[List[Path]]) -> List[Dict[str, str]]:
 
                 content = file.read_text(encoding="utf-8")
 
-                if not content or content == "-" or content == "exclude-from-graph-view:: true\n":
+                if not content or content == "-" or content == "exclude-from-graph-view:: true\n" or content == "exclude-from-graph-view:: true":
                     logger.debug(f"Excluded file with trivial or empty content: {file}")
                     continue
 
