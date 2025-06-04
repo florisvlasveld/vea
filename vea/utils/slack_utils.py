@@ -13,35 +13,6 @@ def markdown_to_mrkdwn(text: str) -> str:
     text = re.sub(r"\*\*(.*?)\*\*", r"*\1*", text)
     text = re.sub(r"__(.*?)__", r"*\1*", text)
    
-    """ 
-    lines = text.splitlines()
-    converted: list[str] = []
-
-    bullet_pattern = re.compile(r"^(\s*)-\s+")
-    ordered_pattern = re.compile(r"^(\s*)(\d+)\.\s+")
-
-
-    for line in lines:
-        m_bullet = bullet_pattern.match(line)
-        if m_bullet:
-            indent = m_bullet.group(1)
-            content = line[m_bullet.end():].lstrip()
-            converted.append(f"{indent}* {content}")
-            continue
-
-        m = ordered_pattern.match(line)
-        if m:
-            indent, number = m.groups()
-            rest = line[m.end():].lstrip()
-            converted.append(f"{indent}{number}. {rest}")
-            continue
-
-        converted.append(line)
-
-    return "\n".join(converted)
-
-    """
-
     return text
 
 
