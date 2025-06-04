@@ -93,7 +93,7 @@ def generate(
             blacklist=calendar_blacklist,
             skip_past_events=skip_past_events,
         )
-        tasks = todoist.load_tasks(target_date, os.getenv("TODOIST_TOKEN", ""), todoist_project or "")
+        tasks = todoist.load_tasks(target_date, todoist_project=todoist_project or "")
         emails = gmail.load_emails(target_date, gmail_labels=gmail_labels)
         slack_data = slack_loader.load_slack_messages() if include_slack else {}
         bio = os.getenv("BIO", "")

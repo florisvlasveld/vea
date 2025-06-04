@@ -3,6 +3,7 @@ from datetime import date, datetime
 from itertools import chain
 from typing import List, Set, Optional
 
+import os
 from todoist_api_python.api import TodoistAPI
 
 logger = logging.getLogger(__name__)
@@ -60,11 +61,12 @@ def get_project_and_subproject_ids(api: TodoistAPI, root_project_id: str) -> Set
     return all_ids
 
 
-def load_tasks(target_date: date, token: str, todoist_project: Optional[str] = None) -> List[dict]:
+def load_tasks(target_date: date, todoist_project: Optional[str] = None, token_unused: Optional[str] = None) -> List[dict]:
     """
     Load tasks from Todoist that are due on or before the target date.
     Optionally filter by a project name.
     """
+    token = os.getenv("TODOIST_TOKEN", "")
     if not token:
         logger.warning("Todoist token not provided; skipping task loading.")
         return []
