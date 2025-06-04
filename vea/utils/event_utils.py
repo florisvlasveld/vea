@@ -66,7 +66,7 @@ def find_upcoming_events(
             e
             for e in timed
             if current <= _dt(e) <= end_limit
-            and e.get("summary", "").strip()
+            and (e.get("summary") or "").strip()
             and not _matches_blacklist(e)
         ]
 
