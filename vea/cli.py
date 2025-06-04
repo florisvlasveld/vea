@@ -124,11 +124,11 @@ def prepare_event(
     try:
         tz = pytz.timezone("Europe/Amsterdam")
         now = datetime.now(tz)
-    if event:
-        start_dt = _parse_event_dt(event)
-        events = _find_upcoming_events(start=start_dt, my_email=my_email, blacklist=calendar_blacklist)
-    else:
-        events = _find_upcoming_events(start=now, my_email=my_email, blacklist=calendar_blacklist)
+        if event:
+            start_dt = _parse_event_dt(event)
+            events = _find_upcoming_events(start=start_dt, my_email=my_email, blacklist=calendar_blacklist)
+        else:
+            events = _find_upcoming_events(start=now, my_email=my_email, blacklist=calendar_blacklist)
 
         if not events:
             typer.echo("No upcoming events found", err=True)
