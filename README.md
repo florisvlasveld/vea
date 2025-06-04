@@ -17,7 +17,7 @@ You only need to do this once per environment.
 vea auth calendar gmail
 ```
 
-> This will open a browser window for Google OAuth. Tokens are saved in `.credentials/`.
+This will open a browser window for Google OAuth. Tokens are saved in `.credentials/`.
 
 ### 3. Configure environment
 
