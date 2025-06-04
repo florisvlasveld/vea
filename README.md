@@ -66,20 +66,27 @@ vea daily \
   --save-markdown
 ```
 
-### Key options
+### Daily command options
 
-- `--journal-dir`: Directory with Markdown journal files (named like `YYYY-MM-DD.md`)
-- `--extras-dir`: Directory with extra `.md` files (e.g. notes, projects)
-- `--todoist-project`: Filter tasks by Todoist project
-- `--calendar-blacklist`: Additional substrings to filter out calendar events (adds to .env)
-- `--skip-past-events`: Ignore calendar events that have already started today
-- `--model`: Use a specific LLM (e.g., `o4-mini`, `claude-3-7-sonnet-latest`, or `gemini-2.5-pro-preview-05-06`)
-- `--quiet`: Suppress printing output to the console
-- `--debug`: Outputs debug information to the console
-- `--save-markdown`: Saves the generated daily brief in Markdown format
-- `--save-pdf`: Saves the generated daily brief in PDF format
+Below is a complete list of options for `vea daily` (run `vea daily --help` to see this at any time):
 
-Run `vea daily --help` to view all available options.
+- `--date` – Date to generate the brief for (defaults to today)
+- `--journal-dir` – Directory with Markdown journal files (named like `YYYY-MM-DD.md`)
+- `--journal-days` – Number of past journal days to include (default: 21)
+- `--extras-dir` – Directory with extra `.md` files (e.g. notes, projects)
+- `--gmail-labels` – Additional Gmail labels to include besides inbox and sent mail
+- `--todoist-project` – Filter tasks by Todoist project
+- `--my-email` – Your email address (used to ignore declined events)
+- `--include-slack / --no-include-slack` – Include recent Slack messages (default: true)
+- `--calendar-blacklist` – Comma-separated substrings to filter out calendar events (overrides `CALENDAR_EVENT_BLACKLIST`)
+- `--skip-past-events` – Ignore calendar events that have already started today
+- `--save-markdown / --no-save-markdown` – Write the summary to a Markdown file (default: true)
+- `--save-pdf` – Save the summary as a PDF
+- `--save-path` – Custom file path or directory for the output
+- `--model` – LLM to use for summarization (e.g. `o4-mini`, `claude-3-7-sonnet-latest`, `gemini-2.5-pro-preview-05-06`)
+- `--skip-path-checks` – Skip validation of input/output paths
+- `--debug` – Enable debug logging
+- `--quiet` – Suppress printing the summary to stdout
 
 ### Weekly summaries
 
@@ -92,6 +99,22 @@ vea weekly --week=22 --journal-dir ~/Logseq/journals --extras-dir ~/Logseq/pages
 The `weekly` command supports input like `2025-W22`, `2025-22`, just `22` (current year assumed), or a date such as `2025-05-28`.
 
 This will produce a concise, narrative-style summary of the week’s activities, based on your journal and extras entries. The output can be saved as a Markdown and/or PDF file.
+
+### Weekly command options
+
+Run `vea weekly --help` to see all options. The main ones are:
+
+- `--week` – Week to summarize (e.g. `2025-W22`, `2025-22`, `22`, or a date)
+- `--journal-dir` – Directory containing journal files
+- `--journal-days` – Number of past journal days to load for context (default: 21)
+- `--extras-dir` – Directory with additional `.md` notes to include
+- `--save-markdown` – Write the weekly summary to a Markdown file
+- `--save-pdf` – Save the summary as a PDF
+- `--save-path` – Custom output directory or file path
+- `--model` – LLM used for summarization
+- `--skip-path-checks` – Skip validation of input/output paths
+- `--debug` – Enable debug logging
+- `--quiet` – Suppress output to stdout
 
 ### AI Summary Engine
 
