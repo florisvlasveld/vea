@@ -1,5 +1,4 @@
 import base64
-import quopri
 import re
 import logging
 from datetime import datetime, timedelta

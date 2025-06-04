@@ -30,15 +30,19 @@ def calculate_lookback_start(now: datetime, workdays: int) -> datetime:
     return current
 
 
-def safe_slack_call(client_func, **kwargs):
+def safe_slack_call(client_func, max_retries: int = 5, **kwargs):
+    retries = 0
     while True:
         try:
             return client_func(**kwargs)
         except SlackApiError as e:
-            if e.response["error"] == "ratelimited":
+            if e.response["error"] == "ratelimited" and retries < max_retries:
                 retry_after = int(e.response.headers.get("Retry-After", 1))
-                logger.warning(f"Rate limited. Retrying after {retry_after} seconds...")
+                logger.warning(
+                    "Rate limited. Retrying after %s seconds...", retry_after
+                )
                 time.sleep(retry_after)
+                retries += 1
             else:
                 raise
 
