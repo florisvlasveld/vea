@@ -137,7 +137,7 @@ def generate_weekly_summary(
     journal_dir: Optional[Path] = typer.Option(None, help="Directory with Markdown journal files"),
     journal_days: int = typer.Option(21, help="Number of past days of journals to include"),
     extras_dir: Optional[Path] = typer.Option(None, help="Directory with additional Markdown files"),
-    save_markdown: bool = typer.Option(False, help="Save output as markdown file."),
+    save_markdown: bool = typer.Option(True, help="Save output as markdown file."),
     save_pdf: bool = typer.Option(False, help="Save output as PDF."),
     save_path: Optional[Path] = typer.Option(None, help="Optional override path to save output."),
     prompt_file: Optional[Path] = typer.Option(None, help="Path to custom prompt file"),
