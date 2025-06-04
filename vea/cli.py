@@ -1,8 +1,7 @@
 import os
-import logging
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional, Dict
+from typing import List, Optional
 
 import typer
 from dotenv import load_dotenv
@@ -21,9 +20,8 @@ from vea.utils.summarization import (
     summarize_weekly,
     summarize_event_preparation,
 )
+from zoneinfo import ZoneInfo
 from vea.utils.slack_utils import send_slack_dm
-import pytz
-from datetime import timedelta
 from vea.utils.pdf_utils import convert_markdown_to_pdf
 from vea.utils.generic_utils import check_required_directories
 
@@ -31,6 +29,26 @@ from vea.utils.generic_utils import check_required_directories
 app = typer.Typer(help="Vea: Generate a personalized daily briefing or weekly summary.")
 
 load_dotenv()
+
+
+def _find_upcoming_events(
+    *,
+    start: datetime,
+    my_email: Optional[str],
+    blacklist: Optional[List[str]],
+    lookahead_minutes: Optional[int] = None,
+) -> List[dict]:
+    """Wrapper for :func:`find_upcoming_events` to allow easier testing."""
+    if blacklist is None:
+        env_bl = os.getenv("CALENDAR_EVENT_BLACKLIST", "")
+        blacklist = [b.strip() for b in env_bl.split(",") if b.strip()]
+
+    return find_upcoming_events(
+        start=start,
+        my_email=my_email,
+        blacklist=blacklist,
+        lookahead_minutes=lookahead_minutes,
+    )
 
 
 @app.command("auth")
@@ -178,7 +196,9 @@ def generate_weekly_summary(
             latest_date=week_end  # <-- this ensures future entries are excluded
         )
 
-        journal_in_week = lambda e: "date" in e and week_start <= e["date"] <= week_end
+        def journal_in_week(entry: dict) -> bool:
+            return "date" in entry and week_start <= entry["date"] <= week_end
+
         journals_in_week = [e for e in all_journals if journal_in_week(e)]
         journals_contextual = [e for e in all_journals if not journal_in_week(e)]
         extras_data = all_extras
@@ -254,7 +274,7 @@ def prepare_event(
         raise typer.Exit(code=1)
 
     try:
-        tz = pytz.timezone("Europe/Amsterdam")
+        tz = ZoneInfo(os.getenv("TIMEZONE", "Europe/Amsterdam"))
         now = datetime.now(tz)
         if event:
             start_dt = parse_event_dt(event)
@@ -274,7 +294,7 @@ def prepare_event(
 
         if not events:
             typer.echo("No upcoming events found", err=True)
-            exit();
+            raise typer.Exit(code=1)
 
         extras_data = extras.load_extras([extras_dir] if extras_dir else [])
         alias_map = extras.build_alias_map(extras_data)
@@ -290,7 +310,7 @@ def prepare_event(
         emails = gmail.load_emails(now.date(), gmail_labels=gmail_labels)
         first_dt = datetime.fromisoformat(events[0]["start"])
         if first_dt.tzinfo is None:
-            first_dt = tz.localize(first_dt)
+            first_dt = first_dt.replace(tzinfo=tz)
         tasks = todoist.load_tasks(first_dt.date(), todoist_project=todoist_project or "")
         slack_data = slack_loader.load_slack_messages(workdays_lookback=3) if include_slack else {}
         bio = os.getenv("BIO", "")
@@ -317,7 +337,7 @@ def prepare_event(
         if save_markdown or save_pdf:
             first_dt = datetime.fromisoformat(events[0]["start"])
             if first_dt.tzinfo is None:
-                first_dt = tz.localize(first_dt)
+                first_dt = first_dt.replace(tzinfo=tz)
             filename = first_dt.strftime("%Y-%m-%d_%H%M_event.md")
             out_path = resolve_output_path(save_path, first_dt.date(), custom_filename=filename)
 

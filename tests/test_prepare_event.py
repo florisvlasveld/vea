@@ -1,10 +1,9 @@
-import os
+# ruff: noqa: E402
 import sys
 from datetime import datetime, tzinfo
 from types import SimpleNamespace
 from zoneinfo import ZoneInfo
 
-import pytest
 
 # Provide a minimal 'typer' stub so vea.cli can be imported without the real
 # dependency installed in the test environment.

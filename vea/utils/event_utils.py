@@ -1,18 +1,18 @@
 """Utility functions for event-based operations."""
 
+import os
 from datetime import datetime, timedelta
 from typing import List, Optional
-
-import pytz
+from zoneinfo import ZoneInfo
 
 from vea.loaders import gcal
 
 
 def parse_event_dt(dt_str: str) -> datetime:
     """Parse an event start time string in ``YYYY-MM-DD HH:MM`` format."""
-    tz = pytz.timezone("Europe/Amsterdam")
+    tz = ZoneInfo(os.getenv("TIMEZONE", "Europe/Amsterdam"))
     dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M")
-    return tz.localize(dt)
+    return dt.replace(tzinfo=tz)
 
 
 def find_upcoming_events(
@@ -28,7 +28,7 @@ def find_upcoming_events(
     ``start``. If ``lookahead_minutes`` is provided, only events starting within
     that window are considered.
     """
-    tz = pytz.timezone("Europe/Amsterdam")
+    tz = ZoneInfo(os.getenv("TIMEZONE", "Europe/Amsterdam"))
     current = start.astimezone(tz)
     end_limit = (
         current + timedelta(minutes=lookahead_minutes)
@@ -53,7 +53,7 @@ def find_upcoming_events(
         def _dt(ev: dict) -> datetime:
             dt_val = datetime.fromisoformat(ev["start"])
             if dt_val.tzinfo is None:
-                dt_val = tz.localize(dt_val)
+                dt_val = dt_val.replace(tzinfo=tz)
             return dt_val
 
         def _matches_blacklist(ev: dict) -> bool:

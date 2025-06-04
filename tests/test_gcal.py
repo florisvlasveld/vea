@@ -1,3 +1,4 @@
+# ruff: noqa: E402
 from datetime import datetime, timedelta
 import sys
 from types import SimpleNamespace
@@ -37,8 +38,6 @@ class _DummyDiscovery:
 sys.modules.setdefault("google.oauth2.credentials", SimpleNamespace(Credentials=_DummyCreds))
 sys.modules.setdefault("googleapiclient.discovery", SimpleNamespace(build=_DummyDiscovery.build))
 
-import pytz
-
 import vea.loaders.gcal as gcal
 
 class DummyCreds:
@@ -61,7 +60,7 @@ def make_event(summary, start, end, all_day=False):
 
 
 def test_skip_past_events(monkeypatch):
-    tz = pytz.timezone("Europe/Amsterdam")
+    tz = ZoneInfo("Europe/Amsterdam")
     now = datetime.now(tz).replace(microsecond=0)
     past = now - timedelta(hours=1)
     future = now + timedelta(hours=1)
@@ -87,7 +86,7 @@ def test_skip_past_events(monkeypatch):
 
 
 def test_no_skip_past_events(monkeypatch):
-    tz = pytz.timezone("Europe/Amsterdam")
+    tz = ZoneInfo("Europe/Amsterdam")
     now = datetime.now(tz).replace(microsecond=0)
     past = now - timedelta(hours=1)
     future = now + timedelta(hours=1)

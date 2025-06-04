@@ -5,11 +5,13 @@ from datetime import datetime, date, timedelta
 from pathlib import Path
 from typing import List, Optional
 
-import pytz
+from zoneinfo import ZoneInfo
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
 logger = logging.getLogger(__name__)
+
+LOCAL_TZ = ZoneInfo(os.getenv("TIMEZONE", "Europe/Amsterdam"))
 
 DEFAULT_BLACKLIST = [
 ]
@@ -19,10 +21,12 @@ TOKEN_PATH = Path(".credentials/calendar_token.json")
 
 def get_effective_offset(tz_name: str, dt: datetime) -> timedelta:
     try:
-        tz = pytz.timezone(tz_name) if tz_name else pytz.UTC
+        tz = ZoneInfo(tz_name) if tz_name else ZoneInfo("UTC")
         if dt.tzinfo is None:
-            dt = tz.localize(dt)
-        return dt.utcoffset()
+            dt = dt.replace(tzinfo=tz)
+        else:
+            dt = dt.astimezone(tz)
+        return dt.utcoffset() or timedelta(0)
     except Exception as e:
         logger.warning(f"Failed to calculate offset for event: {e}")
         return timedelta(0)
@@ -65,9 +69,9 @@ def load_events(
     creds = Credentials.from_authorized_user_file(str(TOKEN_PATH))
     service = build("calendar", "v3", credentials=creds)
 
-    tz = pytz.timezone("Europe/Amsterdam")
-    start = tz.localize(datetime.combine(target_date, datetime.min.time()))
-    end = tz.localize(datetime.combine(target_date, datetime.max.time()))
+    tz = LOCAL_TZ
+    start = datetime.combine(target_date, datetime.min.time()).replace(tzinfo=tz)
+    end = datetime.combine(target_date, datetime.max.time()).replace(tzinfo=tz)
 
     calendar_ids = ["primary"]
     additional_ids = os.getenv("GCAL_ADDITIONAL_CALENDARS", "")
@@ -145,7 +149,7 @@ def load_events(
             except Exception:
                 return False
             if dt.tzinfo is None:
-                dt = tz.localize(dt)
+                dt = dt.replace(tzinfo=tz)
             return dt < now
 
         all_events = [ev for ev in all_events if not event_is_past(ev)]
