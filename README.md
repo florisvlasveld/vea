@@ -1,17 +1,13 @@
 # Vea
 
-Generate a personalized executive daily briefing with a single command-line tool. Pulls in signals from your Google Calendar, Gmail, Todoist, local Markdown notes, and Slack – then condenses it all using AI into a readable summary.
+Generate a personalized executive daily briefing, a weekly summary, or a last-minute briefing for a specific calendar event, all with a single command-line tool. Pulls in signals from your Google Calendar, Gmail, Todoist, local Markdown notes, and Slack – then condenses it all using AI into readable summaries.
 
 
 ## Setup
 
 ### 1. Google APIs
 
-Download your OAuth credentials from the [Google Cloud Console](https://console.cloud.google.com/apis/credentials), and save the file as:
-
-```bash
-credentials/client_secret.json
-```
+Download your OAuth credentials from the [Google Cloud Console](https://console.cloud.google.com/apis/credentials), and save the file as `credentials/client_secret.json`.
 
 ### 2. Authorize access (first time only)
 
@@ -33,7 +29,7 @@ Copy `.env.example` to `.env` and fill in the values you need:
 - `BIO`
 - Et cetera.
 
-### 4. Install the CLI
+### 4. Install the tool
 
 You can use either `pipx` or a virtual environment.
 
@@ -50,7 +46,7 @@ pip install -e .
 ```
 
 
-## Usage
+## Daily briefing
 
 ⚠️ Note: Depending on how much data is being processed (calendar events, emails, tasks, notes, Slack messages), generating your daily brief may take several minutes or even significantly longer to complete. Some models may not be able to handle the amount of input data.
 
@@ -62,7 +58,6 @@ vea daily \
   --save-path ~/DailyBrief/ \
   --todoist-project "My Todoist Project" \
   --calendar-blacklist "Lunch, Focus time" \
-  --skip-past-events \
   --save-markdown
 ```
 
@@ -74,16 +69,16 @@ Below is a complete list of options for `vea daily` (run `vea daily --help` to s
 - `--journal-dir` – Directory with Markdown journal files (named like `YYYY-MM-DD.md`)
 - `--journal-days` – Number of past journal days to include (default: 21)
 - `--extras-dir` – Directory with extra `.md` files (e.g. notes, projects)
-- `--gmail-labels` – Additional Gmail labels to include besides inbox and sent mail
+- `--gmail-labels` – Additional Gmail labels to include besides `inbox` and `sent` mail
 - `--todoist-project` – Filter tasks by Todoist project
 - `--my-email` – Your email address (used to ignore declined events)
 - `--include-slack / --no-include-slack` – Include recent Slack messages (default: true)
 - `--calendar-blacklist` – Comma-separated substrings to filter out calendar events (overrides `CALENDAR_EVENT_BLACKLIST`)
 - `--skip-past-events` – Ignore calendar events that have already started today
 - `--save-markdown / --no-save-markdown` – Write the summary to a Markdown file (default: true)
-- `--save-pdf` – Save the summary as a PDF
+- `--save-pdf` – Save the summary as a PDF file
 - `--save-path` – Custom file path or directory for the output
-- `--prompt-file` – Path to a custom prompt file
+- `--prompt-file` – Path to a custom prompt file (default: `/prompts/daily-default.prompt`)
 - `--model` – LLM to use for summarization (e.g. `o4-mini`, `claude-3-7-sonnet-latest`, `gemini-2.5-pro-preview-05-06`)
 - `--skip-path-checks` – Skip validation of input/output paths
 - `--debug` – Enable debug logging
@@ -103,7 +98,7 @@ This will produce a concise, narrative-style summary of the week’s activities,
 
 ### Weekly command options
 
-Run `vea weekly --help` to see all options. The main ones are:
+Run `vea weekly --help` to see all options. Key options include:
 
 - `--week` – Week to summarize (e.g. `2025-W22`, `2025-22`, `22`, or a date)
 - `--journal-dir` – Directory containing journal files
@@ -112,28 +107,30 @@ Run `vea weekly --help` to see all options. The main ones are:
 - `--save-markdown` – Write the weekly summary to a Markdown file
 - `--save-pdf` – Save the summary as a PDF
 - `--save-path` – Custom output directory or file path
-- `--prompt-file` – Path to a custom prompt file
-- `--model` – LLM used for summarization
-- `--skip-path-checks` – Skip validation of input/output paths
-- `--debug` – Enable debug logging
-- `--quiet` – Suppress output to stdout
+- `--prompt-file` – Path to a custom prompt file (default: `/prompts/weekly-default.prompt`)
+
+### Prepare for an event
+
+Use `vea prepare-event` to get a quick briefing before a meeting. The command collects emails, tasks, notes and Slack messages around the event time and summarizes them with your LLM of choice. If you don't specify `--event`, the next upcoming calendar entry is used.
+
+```bash
+vea prepare-event --lookahead-minutes 30 --slack-dm
+```
+
+Key options include:
+- `--event` – Event start time like `2025-05-28 14:00`
+- `--lookahead-minutes` – How far ahead to search for the next event
+- `--journal-dir` – Directory with Markdown journal files
+- `--journal-days` – Number of past journal days to include (default: 5)
+- `--slack-dm` – Send the output as a Slack DM to yourself
 
 ### AI Summary Engine
 
-You can choose between OpenAI, Anthropic (Claude), or Google Gemini models. The tool builds a structured prompt with:
-
-- Calendar events
-- Emails (inbox, sent, and extra labels)
-- Todoist tasks
-- Slack messages
-- Journal entries
-- Additional notes
-
-Then it asks your model of choice to create a concise, structured daily brief.
+You can choose between OpenAI, Anthropic (Claude), or Google Gemini models.
 
 ### Vea Instructions in Today’s Journal
 
-You can give special instructions to the AI for the daily briefing by writing a note to `Vea` in **today’s journal entry**.
+You can give special instructions to the LLM for the daily briefing by writing a note to `Vea` in **today’s journal entry**.
 
 Add a bullet starting with `Vea` or `[[Vea]]` in your Markdown journal file:
 
@@ -144,7 +141,7 @@ Add a bullet starting with `Vea` or `[[Vea]]` in your Markdown journal file:
 These instructions are:
 - Only processed if they appear in **today’s journal file**.
 - Ignored in all other journal entries.
-- Treated as **binding** — the AI will attempt to follow them, e.g.:
+- Treated as **binding** — the LLM will attempt to follow them, e.g.:
   - Add custom insights.
   - Emphasize specific events or people.
   - Include extra sections or summaries.
@@ -158,7 +155,7 @@ This is a powerful way to tailor your daily brief without changing any code.
 
 ## Slack Integration
 
-To include relevant messages from Slack in your daily briefing, you'll need to create and install a Slack App that can access channel history.
+To include relevant messages from Slack in your daily briefing or to send last-minute meeting briefings to your personal Slack channel, you'll need to create and install a Slack App.
 
 ### 1. Create a Slack App
 
@@ -166,7 +163,7 @@ Go to: [https://api.slack.com/apps](https://api.slack.com/apps)
 
 - Click **"Create New App"**
 - Choose **"From scratch"**
-- Give it a name like `Daily Brief Assistant`
+- Give it a name like `Vea`
 - Select your Slack workspace
 
 ### 2. Add OAuth Scopes
@@ -176,18 +173,25 @@ Navigate to **OAuth & Permissions** in the left-hand menu and under **Scopes →
 ```
 channels:history
 channels:read
+channels:write
+chat:write
 groups:history
 groups:read
+grousp:write
 im:history
 im:read
+im:write
 mpim:history
 mpim:read
+mpim:write
 users:read
+users:read.email
 ```
 
 These scopes allow the app to:
 - Read messages from public, private, and direct channels
 - Identify users (to show who said what)
+- Send last-minute meeting briefings to your personal Slack channel
 
 > ⚠️ You may need to re-authorize the app if you change scopes later.
 
@@ -208,7 +212,7 @@ SLACK_TOKEN=xoxb-your-bot-token
 
 ### 5. Enable Slack loading
 
-By default, Slack loading is enabled when you run `vea daily`. If you want to skip it:
+By default, Slack loading is enabled when you run Vea. If you want to skip it:
 
 ```bash
 vea daily --include-slack False
@@ -217,4 +221,4 @@ vea daily --include-slack False
 
 ## A note from the author
 
-This tool, including this README, was 100% vibe-coded with ChatGPT 4o. Any bugs are probably just hallucinated features.
+This tool, including this README, was 100% vibe-coded with ChatGPT 4o and OpenAI Codex. Any bugs are probably just hallucinated features.
