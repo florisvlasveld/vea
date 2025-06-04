@@ -50,7 +50,13 @@ def catch_google_api_errors(func):
 
 
 @catch_google_api_errors
-def load_events(target_date: date, my_email: Optional[str] = None, token_unused: Optional[str] = None, blacklist: Optional[List[str]] = None) -> List[dict]:
+def load_events(
+    target_date: date,
+    my_email: Optional[str] = None,
+    token_unused: Optional[str] = None,
+    blacklist: Optional[List[str]] = None,
+    skip_past_events: bool = False,
+) -> List[dict]:
     if not my_email:
         my_email = os.getenv("GOOGLE_ACCOUNT_EMAIL", "").lower()
     else:
@@ -127,6 +133,22 @@ def load_events(target_date: date, my_email: Optional[str] = None, token_unused:
                 )
         except Exception as e:
             logger.warning(f"Failed to fetch events from calendar '{calendar_id}': {e}")
+
+    if skip_past_events and target_date == datetime.now(tz).date():
+        now = datetime.now(tz)
+
+        def event_is_past(ev):
+            if "T" not in ev["start"]:
+                return False
+            try:
+                dt = datetime.fromisoformat(ev["start"])
+            except Exception:
+                return False
+            if dt.tzinfo is None:
+                dt = tz.localize(dt)
+            return dt < now
+
+        all_events = [ev for ev in all_events if not event_is_past(ev)]
 
     # Offset check and sort
     effective_offsets = set()
