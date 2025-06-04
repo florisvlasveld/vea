@@ -28,6 +28,8 @@ h1 {
   margin: 1.8em 0 0.4em 0;
   border-bottom: 1px solid #ccc;
   padding-bottom: 0.2em;
+  page-break-before: always;
+  break-before: page;
 }
 
 h2 {
