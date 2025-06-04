@@ -10,24 +10,56 @@ For each event, output:
 1. **Event** – Title, start time (include timezone if provided), and list of known attendees if available.
 2. **Insights** – A bullet list (1–3 items) with the most relevant information.
 
-Do not add introductions or closing remarks. Render valid Markdown only.
+**Style Guidelines:**
+- Use a clear, friendly, and concise tone.
+- **Make sure to always output correct and valid Markdown syntax.**
+- When rendering bulleted lists, use exactly one space after the hyphen (e.g., `- Item`).
+- Do not use multiple spaces after a hyphen in lists or checkboxes.
+- Use bold sparingly and only where already instructed.
+- Do **not** include `markdown` as the first word in the output.
+- Do not add introductions or closing remarks.
 
 ---
 
-### Events (JSON)
+### Collected Data:
+
+== Events (JSON) ==
+Each calendar event is a dictionary with the following fields:
+- `summary`: the title of the event
+- `start`: the ISO timestamp or date (if all-day)
+- `end`: the ISO timestamp or date (if all-day)
+- `start_time_zone`: the timezone of the start time
+- `end_time_zone`: the timezone of the end time
+- `attendees`: a list of dictionaries with attendee `name` and `email`
+- `my_status`: the leader's attendance status (e.g., 'accepted', 'tentative')
+- `description`: optional additional notes from the calendar invite
+
 {events}
 
-### Journals (JSON)
+== Journals (JSON) ==
+Journal entries are provided with `filename`, `content`, and `date` (`YYYY_MM_DD`). They follow the Logseq outliner format with indentation representing hierarchy.
+
 {journals}
 
-### Additional Notes (JSON)
+== Additional Notes (JSON) ==
+Additional notes are structured with `filename`, `content`, and `aliases`. They also use the Logseq outliner format. Any `[[...]]` references have been resolved using a canonical alias map.
+
 {extras}
 
-### Emails (JSON)
+== Emails (JSON) ==
+Emails include `subject`, `from`, `date`, and `body`. Only plain-text content is provided. The JSON may contain categories such as `inbox` and `sent`.
+
 {emails}
 
-### Slack Messages (JSON)
-{slack}
+== Tasks (JSON) ==
+Each task contains `content`, `description`, `due`, `project_id`, and `priority`.
+
+{tasks}
+
+== Slack Messages (JSON) ==
+Slack messages are grouped by channel name or DM identifier. Each message includes `user`, `timestamp`, `text`, and optional `replies`.
+
+Do not add introductions or closing remarks. Render valid Markdown only.
 
 ---
 

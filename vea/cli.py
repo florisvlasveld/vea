@@ -92,6 +92,7 @@ def prepare_event(
     journal_days: int = typer.Option(21, help="Number of past days of journals to include"),
     extras_dir: Optional[Path] = typer.Option(None, help="Directory with additional Markdown files"),
     gmail_labels: Optional[List[str]] = typer.Option(None, help="List of additional Gmail labels to fetch emails from"),
+    todoist_project: Optional[str] = typer.Option(None, help="Name of the Todoist project to filter tasks by"),
     my_email: Optional[str] = typer.Option(None, help="Your email address to filter declined calendar events"),
     include_slack: bool = typer.Option(True, help="Include recent Slack messages"),
     calendar_blacklist: Optional[List[str]] = typer.Option(
@@ -145,6 +146,10 @@ def prepare_event(
             else []
         )
         emails = gmail.load_emails(now.date(), gmail_labels=gmail_labels)
+        first_dt = datetime.fromisoformat(events[0]["start"])
+        if first_dt.tzinfo is None:
+            first_dt = tz.localize(first_dt)
+        tasks = todoist.load_tasks(first_dt.date(), todoist_project=todoist_project or "")
         slack_data = slack_loader.load_slack_messages() if include_slack else {}
         bio = os.getenv("BIO", "")
 
@@ -154,6 +159,7 @@ def prepare_event(
             journals=journals_data,
             extras=extras_data,
             emails=emails,
+            tasks=tasks,
             slack=slack_data,
             bio=bio,
             prompt_path=prompt_path,

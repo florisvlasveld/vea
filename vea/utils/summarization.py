@@ -132,6 +132,7 @@ def summarize_event_preparation(
     journals: List,
     extras: List,
     emails: Dict,
+    tasks: List,
     slack: Optional[Dict[str, List[Dict[str, str]]]] = None,
     bio: str = "",
     debug: bool = False,
@@ -146,6 +147,7 @@ def summarize_event_preparation(
         journals=json.dumps(journals, indent=2, default=str, ensure_ascii=False),
         extras=json.dumps(extras, indent=2, default=str, ensure_ascii=False),
         emails=json.dumps(emails, indent=2, default=str, ensure_ascii=False),
+        tasks=json.dumps(tasks, indent=2, default=str, ensure_ascii=False),
         slack=json.dumps(slack, indent=2, default=str, ensure_ascii=False) if slack else "",
     )
 
