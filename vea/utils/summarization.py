@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 APP_ROOT = Path(__file__).resolve().parents[2]
 PROMPT_TEMPLATE_PATH = APP_ROOT / "vea" / "prompts" / "daily-default.prompt"
 APP_WEEKLY_PROMPT_PATH = APP_ROOT / "vea/prompts/weekly-default.prompt"
+APP_PREPARE_EVENT_PROMPT_PATH = APP_ROOT / "vea/prompts/prepare-event.prompt"
 
 
 def load_prompt_template(path: Optional[Path] = None) -> str:
@@ -115,6 +116,39 @@ def summarize_weekly(
         journals_contextual=json.dumps(journals_contextual, indent=2, default=str, ensure_ascii=False),
         extras=json.dumps(extras, indent=2, default=str, ensure_ascii=False),
         bio=bio
+    )
+
+    if debug:
+        logger.debug("========== BEGIN PROMPT ==========")
+        logger.debug(prompt)
+        logger.debug("=========== END PROMPT ===========")
+
+    return run_llm_prompt(prompt, model)
+
+
+def summarize_event_preparation(
+    model: str,
+    events: List[dict],
+    journals: List,
+    extras: List,
+    emails: Dict,
+    tasks: List,
+    slack: Optional[Dict[str, List[Dict[str, str]]]] = None,
+    bio: str = "",
+    debug: bool = False,
+    prompt_path: Optional[Path] = None,
+) -> str:
+    """Summarize last-minute insights for upcoming events."""
+
+    template = load_prompt_template(prompt_path or APP_PREPARE_EVENT_PROMPT_PATH)
+    prompt = template.format(
+        bio=bio,
+        events=json.dumps(events, indent=2, default=str, ensure_ascii=False),
+        journals=json.dumps(journals, indent=2, default=str, ensure_ascii=False),
+        extras=json.dumps(extras, indent=2, default=str, ensure_ascii=False),
+        emails=json.dumps(emails, indent=2, default=str, ensure_ascii=False),
+        tasks=json.dumps(tasks, indent=2, default=str, ensure_ascii=False),
+        slack=json.dumps(slack, indent=2, default=str, ensure_ascii=False) if slack else "",
     )
 
     if debug:
