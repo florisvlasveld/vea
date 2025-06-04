@@ -13,6 +13,7 @@ from vea.loaders.extras import load_extras
 from vea.auth import authorize
 
 from vea.utils.date_utils import parse_date, parse_week_input
+from vea.utils.event_utils import parse_event_dt, find_upcoming_events
 from vea.utils.output_utils import resolve_output_path
 from vea.utils.error_utils import enable_debug_logging, handle_exception
 from vea.utils.summarization import (
@@ -30,66 +31,6 @@ from vea.utils.generic_utils import check_required_directories
 app = typer.Typer(help="Vea: Generate a personalized daily briefing or weekly summary.")
 
 load_dotenv()
-
-
-def _parse_event_dt(dt_str: str) -> datetime:
-    tz = pytz.timezone("Europe/Amsterdam")
-    dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M")
-    return tz.localize(dt)
-
-
-def _find_upcoming_events(
-    *,
-    start: datetime,
-    my_email: Optional[str],
-    blacklist: Optional[List[str]],
-) -> List[dict]:
-    tz = pytz.timezone("Europe/Amsterdam")
-    current = start.astimezone(tz)
-    for offset in range(7):
-        day = current.date() + timedelta(days=offset)
-        events = gcal.load_events(
-            day,
-            my_email=my_email,
-            blacklist=blacklist,
-            skip_past_events=(offset == 0),
-        )
-        # Remove events without a title or with only whitespace
-        events = [e for e in events if e.get("summary", "").strip()]
-
-        # Ensure blacklist filtering is honored in case loader implementations
-        # change or custom events are injected during testing
-        env_blacklist = os.getenv("CALENDAR_EVENT_BLACKLIST", "")
-        combined_blacklist = gcal.DEFAULT_BLACKLIST + [
-            item.strip() for item in env_blacklist.split(",") if item.strip()
-        ]
-        if blacklist:
-            combined_blacklist += blacklist
-        if combined_blacklist:
-            events = [
-                e
-                for e in events
-                if not any(
-                    bl.lower() in e.get("summary", "").lower()
-                    for bl in combined_blacklist
-                )
-            ]
-        timed = [e for e in events if "T" in e.get("start", "")]
-        if not timed:
-            continue
-        def _dt(ev):
-            dt = datetime.fromisoformat(ev["start"])
-            if dt.tzinfo is None:
-                dt = tz.localize(dt)
-            return dt
-        starts = [_dt(e) for e in timed]
-        eligible = [e for e, dtval in zip(timed, starts) if dtval >= current]
-        if not eligible:
-            continue
-        start_times = [_dt(e) for e in eligible]
-        earliest = min(start_times)
-        return [e for e, dtval in zip(eligible, start_times) if dtval == earliest]
-    return []
 
 
 @app.command("auth")
@@ -145,10 +86,10 @@ def prepare_event(
         tz = pytz.timezone("Europe/Amsterdam")
         now = datetime.now(tz)
         if event:
-            start_dt = _parse_event_dt(event)
-            events = _find_upcoming_events(start=start_dt, my_email=my_email, blacklist=calendar_blacklist)
+            start_dt = parse_event_dt(event)
+            events = find_upcoming_events(start=start_dt, my_email=my_email, blacklist=calendar_blacklist)
         else:
-            events = _find_upcoming_events(start=now, my_email=my_email, blacklist=calendar_blacklist)
+            events = find_upcoming_events(start=now, my_email=my_email, blacklist=calendar_blacklist)
 
         if not events:
             typer.echo("No upcoming events found", err=True)
