@@ -45,7 +45,7 @@ def markdown_to_mrkdwn(text: str) -> str:
     return text
 
 
-def send_slack_dm(message: str, *, token: Optional[str] = None) -> None:
+def send_slack_dm(message: str, *, token: Optional[str] = None, quiet: bool = False) -> None:
     """Send a direct message to the authenticated user."""
     token = token or os.environ.get("SLACK_TOKEN")
     if not token:
@@ -62,6 +62,7 @@ def send_slack_dm(message: str, *, token: Optional[str] = None) -> None:
             text=mrkdwn_message,
             blocks=[{"type": "section", "text": {"type": "mrkdwn", "text": mrkdwn_message}}],
         )
-        logger.info("Sent Slack DM to user")
+        if not quiet:
+            logger.info("Sent Slack DM to user")
     except SlackApiError as e:
         logger.warning(f"Failed to send Slack DM: {e.response['error']}")

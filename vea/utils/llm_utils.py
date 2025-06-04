@@ -12,9 +12,12 @@ from .output_utils import truncate_prompt
 logger = logging.getLogger(__name__)
 
 
-def run_llm_prompt(prompt: str, model: Optional[str] = None) -> str:
+def run_llm_prompt(prompt: str, model: Optional[str] = None, *, quiet: bool = False) -> str:
 
-    logger.info(f"Sending collected data to {model}...")
+    if quiet:
+        logger.debug("Sending collected data to %s...", model)
+    else:
+        logger.info("Sending collected data to %s...", model)
 
     openai.api_key = os.getenv("OPENAI_API_KEY", os.getenv("OPENAI_KEY", ""))
     anthropic.api_key = os.getenv("ANTHROPIC_API_KEY", "")

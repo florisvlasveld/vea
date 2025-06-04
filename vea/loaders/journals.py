@@ -75,5 +75,9 @@ def load_journals(
             logger.warning(f"Skipping file {path} due to error: {e}", exc_info=e)
             continue
 
-    logger.info(f"Included {len(entries)} journal files from the past {journal_days} days.")
+    logger.debug(
+        "Included %d journal files from the past %d days.",
+        len(entries),
+        journal_days,
+    )
     return entries

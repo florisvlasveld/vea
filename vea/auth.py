@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import List
+import logging
 
 from google_auth_oauthlib.flow import InstalledAppFlow
 
@@ -10,6 +11,8 @@ SCOPES = {
 
 TOKEN_DIR = Path(".credentials")
 CLIENT_SECRET = Path("credentials/client_secret.json")
+
+logger = logging.getLogger(__name__)
 
 
 def authorize(scopes: List[str]) -> None:
@@ -31,4 +34,4 @@ def authorize(scopes: List[str]) -> None:
         token_file = TOKEN_DIR / f"{s}_token.json"
         with open(token_file, "w") as f:
             f.write(creds.to_json())
-        print(f"Saved token to {token_file}")
+        logger.info("Saved token to %s", token_file)
