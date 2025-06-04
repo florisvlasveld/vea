@@ -325,6 +325,7 @@ def prepare_event(
             slack=slack_data,
             bio=bio,
             prompt_path=prompt_path,
+            quiet=quiet,
             debug=debug,
         )
 
@@ -332,7 +333,7 @@ def prepare_event(
             print(summary)
 
         if slack_dm:
-            send_slack_dm(summary)
+            send_slack_dm(summary, quiet=quiet)
 
         if save_markdown or save_pdf:
             first_dt = datetime.fromisoformat(events[0]["start"])

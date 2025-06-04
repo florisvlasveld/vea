@@ -88,12 +88,12 @@ def summarize_daily(
 
 
 
-    if debug:
+    if debug and not quiet:
         logger.debug("========== BEGIN PROMPT ==========")
         logger.debug(prompt)
         logger.debug("=========== END PROMPT ===========")
 
-    return run_llm_prompt(prompt, model)
+    return run_llm_prompt(prompt, model, quiet=quiet)
 
 
 def summarize_weekly(
@@ -116,12 +116,12 @@ def summarize_weekly(
         bio=bio
     )
 
-    if debug:
+    if debug and not quiet:
         logger.debug("========== BEGIN PROMPT ==========")
         logger.debug(prompt)
         logger.debug("=========== END PROMPT ===========")
 
-    return run_llm_prompt(prompt, model)
+    return run_llm_prompt(prompt, model, quiet=quiet)
 
 
 def summarize_event_preparation(
@@ -133,6 +133,7 @@ def summarize_event_preparation(
     tasks: List,
     slack: Optional[Dict[str, List[Dict[str, str]]]] = None,
     bio: str = "",
+    quiet: bool = False,
     debug: bool = False,
     prompt_path: Optional[Path] = None,
 ) -> str:
@@ -149,9 +150,9 @@ def summarize_event_preparation(
         slack=json.dumps(slack, indent=2, default=str, ensure_ascii=False) if slack else "",
     )
 
-    if debug:
+    if debug and not quiet:
         logger.debug("========== BEGIN PROMPT ==========")
         logger.debug(prompt)
         logger.debug("=========== END PROMPT ===========")
 
-    return run_llm_prompt(prompt, model)
+    return run_llm_prompt(prompt, model, quiet=quiet)

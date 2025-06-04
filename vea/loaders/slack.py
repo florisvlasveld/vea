@@ -26,7 +26,11 @@ def calculate_lookback_start(now: datetime, workdays: int) -> datetime:
     if now.weekday() in (0, 1):
         while current.weekday() > 4:
             current -= timedelta(days=1)
-    logger.info(f"Fetching messages from: {current.isoformat()} to {now.isoformat()}")
+    logger.debug(
+        "Fetching messages from: %s to %s",
+        current.isoformat(),
+        now.isoformat(),
+    )
     return current
 
 
@@ -56,7 +60,7 @@ def replace_slack_mentions(text: str, user_map: Dict[str, str]) -> str:
 
 
 def build_user_map(client: WebClient) -> Dict[str, str]:
-    logger.info("Fetching Slack user list...")
+    logger.debug("Fetching Slack user list...")
     user_map = {}
     try:
         users = safe_slack_call(client.users_list)["members"]
@@ -151,7 +155,7 @@ def load_slack_messages(workdays_lookback: int = WORKDAYS_LOOKBACK) -> Dict[str,
     results = {}
 
     for conv_type in CHANNEL_TYPES:
-        logger.info(f"Fetching conversations of type: {conv_type}")
+        logger.debug("Fetching conversations of type: %s", conv_type)
         cursor = None
 
         while True:
@@ -177,7 +181,9 @@ def load_slack_messages(workdays_lookback: int = WORKDAYS_LOOKBACK) -> Dict[str,
                 channel_name = get_channel_name(channel, conv_type, user_map)
                 messages = fetch_messages_from_channel(client, channel, conv_type, oldest_ts, latest_ts, user_map)
                 if messages:
-                    logger.info(f"Collected {len(messages)} messages from {channel_name}")
+                    logger.debug(
+                        "Collected %d messages from %s", len(messages), channel_name
+                    )
                     results[channel_name] = messages
 
             cursor = response.get("response_metadata", {}).get("next_cursor")
