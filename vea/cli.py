@@ -56,6 +56,7 @@ def generate(
     save_markdown: bool = typer.Option(True, help="Save output to Markdown file"),
     save_pdf: bool = typer.Option(False, help="Save output to PDF file"),
     save_path: Optional[Path] = typer.Option(None, help="Custom file path or directory to save the output"),
+    prompt_file: Optional[Path] = typer.Option(None, help="Path to custom prompt file"),
     model: str = typer.Option("gemini-2.5-pro-preview-05-06", help="Model to use for summarization (OpenAI, Google Gemini, or Anthropic)"),
     skip_path_checks: bool = typer.Option(False, help="Skip checks for existence of input and output paths"),
     debug: bool = typer.Option(False, help="Enable debug logging"),
@@ -68,7 +69,7 @@ def generate(
     if not skip_path_checks:
         check_required_directories(journal_dir, extras_dir, save_path)
 
-    prompt_path = Path(__file__).parent / "prompts" / "daily-default.prompt"
+    prompt_path = prompt_file or Path(__file__).parent / "prompts" / "daily-default.prompt"
     if not prompt_path.is_file():
         typer.echo(f"Error: Default prompt file does not exist: {prompt_path}", err=True)
         raise typer.Exit(code=1)
@@ -108,6 +109,7 @@ def generate(
             extras=extras_data,
             slack=slack_data,
             bio=bio,
+            prompt_path=prompt_path,
             quiet=quiet,
             debug=debug,
         )
@@ -138,6 +140,7 @@ def generate_weekly_summary(
     save_markdown: bool = typer.Option(False, help="Save output as markdown file."),
     save_pdf: bool = typer.Option(False, help="Save output as PDF."),
     save_path: Optional[Path] = typer.Option(None, help="Optional override path to save output."),
+    prompt_file: Optional[Path] = typer.Option(None, help="Path to custom prompt file"),
     model: str = typer.Option("gemini-2.5-pro-preview-05-06", help="Model to use for summarization (OpenAI, Google Gemini, or Anthropic)"),
     skip_path_checks: bool = typer.Option(False, help="Skip path existence checks."),
     debug: bool = typer.Option(False, help="Enable debug logging"),
@@ -149,7 +152,7 @@ def generate_weekly_summary(
     if not skip_path_checks:
         check_required_directories(journal_dir, extras_dir, save_path)
 
-    prompt_path = Path(__file__).parent / "prompts" / "weekly-default.prompt"
+    prompt_path = prompt_file or Path(__file__).parent / "prompts" / "weekly-default.prompt"
     if not prompt_path.is_file():
         typer.echo(f"Error: Default prompt file does not exist: {prompt_path}", err=True)
         raise typer.Exit(code=1)
@@ -180,6 +183,7 @@ def generate_weekly_summary(
             journals_contextual=journals_contextual,
             extras=extras_data,
             bio=bio,
+            prompt_path=prompt_path,
             quiet=quiet,
             debug=debug,
         )
