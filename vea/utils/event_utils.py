@@ -20,11 +20,25 @@ def find_upcoming_events(
     start: datetime,
     my_email: Optional[str],
     blacklist: Optional[List[str]],
+    lookahead_minutes: Optional[int] = None,
 ) -> List[dict]:
-    """Find upcoming events starting from ``start`` within the next 7 days."""
+    """Find upcoming events starting from ``start``.
+
+    Searches day by day and returns the earliest events beginning on or after
+    ``start``. If ``lookahead_minutes`` is provided, only events starting within
+    that window are considered.
+    """
     tz = pytz.timezone("Europe/Amsterdam")
     current = start.astimezone(tz)
-    for offset in range(7):
+    end_limit = (
+        current + timedelta(minutes=lookahead_minutes)
+        if lookahead_minutes is not None
+        else current + timedelta(days=7)
+    )
+
+    days_to_check = min((end_limit.date() - current.date()).days + 1, 7)
+
+    for offset in range(days_to_check):
         day = current.date() + timedelta(days=offset)
         events = gcal.load_events(
             day,
@@ -42,11 +56,25 @@ def find_upcoming_events(
                 dt_val = tz.localize(dt_val)
             return dt_val
 
-        starts = [_dt(e) for e in timed]
-        eligible = [e for e, dt_val in zip(timed, starts) if dt_val >= current]
+        def _matches_blacklist(ev: dict) -> bool:
+            if not blacklist:
+                return False
+            summary = ev.get("summary", "").lower()
+            return any(bl.lower() in summary for bl in blacklist)
+
+        eligible = [
+            e
+            for e in timed
+            if current <= _dt(e) <= end_limit
+            and e.get("summary", "").strip()
+            and not _matches_blacklist(e)
+        ]
+
         if not eligible:
             continue
+
         start_times = [_dt(e) for e in eligible]
         earliest = min(start_times)
         return [e for e, dt_val in zip(eligible, start_times) if dt_val == earliest]
+        
     return []

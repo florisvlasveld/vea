@@ -219,6 +219,7 @@ def prepare_event(
         None,
         help="Event start time to prepare for (YYYY-MM-DD HH:MM). If omitted, use the next upcoming event.",
     ),
+    lookahead_minutes: Optional[int] = typer.Option(None, help="Number of minutes to look ahead for upcoming events"),
     journal_dir: Optional[Path] = typer.Option(None, help="Directory with Markdown journal files"),
     journal_days: int = typer.Option(5, help="Number of past days of journals to include"),
     extras_dir: Optional[Path] = typer.Option(None, help="Directory with additional Markdown files"),
@@ -257,13 +258,23 @@ def prepare_event(
         now = datetime.now(tz)
         if event:
             start_dt = parse_event_dt(event)
-            events = find_upcoming_events(start=start_dt, my_email=my_email, blacklist=calendar_blacklist)
+            events = find_upcoming_events(
+                start=start_dt,
+                my_email=my_email,
+                blacklist=calendar_blacklist,
+                lookahead_minutes=lookahead_minutes,
+            )
         else:
-            events = find_upcoming_events(start=now, my_email=my_email, blacklist=calendar_blacklist)
+            events = find_upcoming_events(
+                start=now,
+                my_email=my_email,
+                blacklist=calendar_blacklist,
+                lookahead_minutes=lookahead_minutes,
+            )
 
         if not events:
             typer.echo("No upcoming events found", err=True)
-            raise typer.Exit(code=1)
+            exit();
 
         extras_data = extras.load_extras([extras_dir] if extras_dir else [])
         alias_map = extras.build_alias_map(extras_data)
@@ -281,7 +292,7 @@ def prepare_event(
         if first_dt.tzinfo is None:
             first_dt = tz.localize(first_dt)
         tasks = todoist.load_tasks(first_dt.date(), todoist_project=todoist_project or "")
-        slack_data = slack_loader.load_slack_messages() if include_slack else {}
+        slack_data = slack_loader.load_slack_messages(workdays_lookback=3) if include_slack else {}
         bio = os.getenv("BIO", "")
 
         summary = summarize_event_preparation(

@@ -19,6 +19,7 @@ Title, start time (include timezone if provided), and list of known attendees if
 - Use a clear, friendly, and concise tone.
 - **Make sure to always output correct and valid Markdown syntax.**
 - Use bold sparingly.
+- Do not make use of lists (ordered or unordered).
 - Do **not** include `markdown` as the first word in the output.
 - Do not add introductions or closing remarks.
 
@@ -44,12 +45,6 @@ Each calendar event is a dictionary with the following fields:
 Journal entries are provided with `filename`, `content`, and `date` (`YYYY_MM_DD`). They follow the Logseq outliner format with indentation representing hierarchy.
 
 {journals}
-
-
-== Additional Notes (JSON) ==
-Additional notes are structured with `filename`, `content`, and `aliases`. They also use the Logseq outliner format. Any `[[...]]` references have been resolved using a canonical alias map.
-
-{extras}
 
 
 == Emails (JSON) ==
