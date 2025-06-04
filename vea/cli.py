@@ -54,6 +54,26 @@ def _find_upcoming_events(
             blacklist=blacklist,
             skip_past_events=(offset == 0),
         )
+        # Remove events without a title or with only whitespace
+        events = [e for e in events if e.get("summary", "").strip()]
+
+        # Ensure blacklist filtering is honored in case loader implementations
+        # change or custom events are injected during testing
+        env_blacklist = os.getenv("CALENDAR_EVENT_BLACKLIST", "")
+        combined_blacklist = gcal.DEFAULT_BLACKLIST + [
+            item.strip() for item in env_blacklist.split(",") if item.strip()
+        ]
+        if blacklist:
+            combined_blacklist += blacklist
+        if combined_blacklist:
+            events = [
+                e
+                for e in events
+                if not any(
+                    bl.lower() in e.get("summary", "").lower()
+                    for bl in combined_blacklist
+                )
+            ]
         timed = [e for e in events if "T" in e.get("start", "")]
         if not timed:
             continue
