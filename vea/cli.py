@@ -128,7 +128,7 @@ def generate_weekly_summary(
     extras_dir: Optional[Path] = typer.Option(None, help="Directory with additional Markdown files"),
     save_markdown: bool = typer.Option(False, help="Save output as markdown file."),
     save_pdf: bool = typer.Option(False, help="Save output as PDF."),
-    save_path: Optional[str] = typer.Option(None, help="Optional override path to save output."),
+    save_path: Optional[Path] = typer.Option(None, help="Optional override path to save output."),
     model: str = typer.Option("gemini-2.5-pro-preview-05-06", help="Model to use for summarization (OpenAI, Google Gemini, or Anthropic)"),
     skip_path_checks: bool = typer.Option(False, help="Skip path existence checks."),
     debug: bool = typer.Option(False, help="Enable debug logging"),
@@ -180,13 +180,13 @@ def generate_weekly_summary(
 
         if save_markdown or save_pdf:
             filename = f"{week_start.isocalendar().year}-W{week_start.isocalendar().week:02d}.md"
-            md_path = resolve_output_path(Path(save_path) if save_path else None, week_start, custom_filename=filename)
+            md_path = resolve_output_path(save_path, week_start, custom_filename=filename)
 
             if save_markdown:
                 md_path.write_text(summary, encoding="utf-8")
 
             if save_pdf:
-                convert_markdown_to_pdf(summary, md_path.with_suffix(".pdf"))
+                convert_markdown_to_pdf(summary, md_path.with_suffix(".pdf"), debug=debug)
 
     except Exception as e:
         handle_exception(e)
