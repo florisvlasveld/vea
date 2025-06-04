@@ -83,6 +83,7 @@ Below is a complete list of options for `vea daily` (run `vea daily --help` to s
 - `--save-markdown / --no-save-markdown` – Write the summary to a Markdown file (default: true)
 - `--save-pdf` – Save the summary as a PDF
 - `--save-path` – Custom file path or directory for the output
+- `--prompt-file` – Path to a custom prompt file
 - `--model` – LLM to use for summarization (e.g. `o4-mini`, `claude-3-7-sonnet-latest`, `gemini-2.5-pro-preview-05-06`)
 - `--skip-path-checks` – Skip validation of input/output paths
 - `--debug` – Enable debug logging
@@ -111,6 +112,7 @@ Run `vea weekly --help` to see all options. The main ones are:
 - `--save-markdown` – Write the weekly summary to a Markdown file
 - `--save-pdf` – Save the summary as a PDF
 - `--save-path` – Custom output directory or file path
+- `--prompt-file` – Path to a custom prompt file
 - `--model` – LLM used for summarization
 - `--skip-path-checks` – Skip validation of input/output paths
 - `--debug` – Enable debug logging

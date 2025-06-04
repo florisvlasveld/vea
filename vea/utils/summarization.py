@@ -71,9 +71,10 @@ def summarize_daily(
     bio: str = "",
     quiet: bool = False,
     debug: bool = False,
+    prompt_path: Optional[Path] = None,
 ) -> str:
 
-    prompt_template = load_prompt_template()
+    prompt_template = load_prompt_template(prompt_path)
     prompt = render_daily_prompt(
         prompt_template,
         date=date,
@@ -105,8 +106,9 @@ def summarize_weekly(
     bio: str = "",
     quiet: bool = False,
     debug: bool = False,
+    prompt_path: Optional[Path] = None,
 ) -> str:
-    template = load_prompt_template(APP_WEEKLY_PROMPT_PATH)
+    template = load_prompt_template(prompt_path or APP_WEEKLY_PROMPT_PATH)
     prompt = template.format(
         week=week,
         journals_in_week=json.dumps(journals_in_week, indent=2, default=str, ensure_ascii=False),
