@@ -18,7 +18,11 @@ def send_slack_dm(message: str, *, token: Optional[str] = None) -> None:
     try:
         user_id = client.auth_test()["user_id"]
         channel_id = client.conversations_open(users=user_id)["channel"]["id"]
-        client.chat_postMessage(channel=channel_id, text=message)
+        client.chat_postMessage(
+            channel=channel_id,
+            text=message,
+            blocks=[{"type": "section", "text": {"type": "mrkdwn", "text": message}}],
+        )
         logger.info("Sent Slack DM to user")
     except SlackApiError as e:
         logger.warning(f"Failed to send Slack DM: {e.response['error']}")

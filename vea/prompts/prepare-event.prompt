@@ -8,7 +8,7 @@ Focus on what will help the leader prepare effectively: related topics, mentions
 ### Output Format
 For each event, output:
 1. **Event** – Title, start time (include timezone if provided), and list of known attendees if available.
-2. **Insights** – A bullet list (1–3 items) with the most relevant information.
+2. **Insights** – A bullet list (2–5 items) with the most relevant information.
 
 **Style Guidelines:**
 - Use a clear, friendly, and concise tone.
@@ -58,6 +58,8 @@ Each task contains `content`, `description`, `due`, `project_id`, and `priority`
 
 == Slack Messages (JSON) ==
 Slack messages are grouped by channel name or DM identifier. Each message includes `user`, `timestamp`, `text`, and optional `replies`.
+
+{slack}
 
 Do not add introductions or closing remarks. Render valid Markdown only.
 
