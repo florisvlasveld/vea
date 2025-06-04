@@ -108,3 +108,21 @@ def test_find_upcoming_events_filters(monkeypatch):
 
     assert len(result) == 1
     assert result[0]["summary"] == "Real Meeting"
+
+
+def test_find_upcoming_events_handles_none_summary(monkeypatch):
+    events = [
+        {"summary": None, "start": "2025-05-01T10:00:00", "end": "2025-05-01T11:00:00"},
+        {"summary": "Valid Meeting", "start": "2025-05-01T11:00:00", "end": "2025-05-01T12:00:00"},
+    ]
+
+    def dummy_load_events(*args, **kwargs):
+        return events
+
+    monkeypatch.setattr(cli.gcal, "load_events", dummy_load_events)
+
+    start = datetime(2025, 5, 1, 9, 0)
+    result = cli._find_upcoming_events(start=start, my_email=None, blacklist=None)
+
+    assert len(result) == 1
+    assert result[0]["summary"] == "Valid Meeting"
