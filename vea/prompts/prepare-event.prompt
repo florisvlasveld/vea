@@ -23,7 +23,7 @@ For each event, output:
 
 ### Collected Data:
 
-== Events (JSON) ==
+== Event(s) (JSON) ==
 Each calendar event is a dictionary with the following fields:
 - `summary`: the title of the event
 - `start`: the ISO timestamp or date (if all-day)
