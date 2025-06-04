@@ -15,7 +15,14 @@ from vea.auth import authorize
 from vea.utils.date_utils import parse_date, parse_week_input
 from vea.utils.output_utils import resolve_output_path
 from vea.utils.error_utils import enable_debug_logging, handle_exception
-from vea.utils.summarization import summarize_daily, summarize_weekly
+from vea.utils.summarization import (
+    summarize_daily,
+    summarize_weekly,
+    summarize_event_preparation,
+)
+from vea.utils.slack_utils import send_slack_dm
+import pytz
+from datetime import timedelta
 from vea.utils.pdf_utils import convert_markdown_to_pdf
 from vea.utils.generic_utils import check_required_directories
 
@@ -25,12 +32,153 @@ app = typer.Typer(help="Vea: Generate a personalized daily briefing or weekly su
 load_dotenv()
 
 
+def _parse_event_dt(dt_str: str) -> datetime:
+    tz = pytz.timezone("Europe/Amsterdam")
+    dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M")
+    return tz.localize(dt)
+
+
+def _find_upcoming_events(
+    *,
+    start: datetime,
+    my_email: Optional[str],
+    blacklist: Optional[List[str]],
+) -> List[dict]:
+    tz = pytz.timezone("Europe/Amsterdam")
+    current = start.astimezone(tz)
+    for offset in range(7):
+        day = current.date() + timedelta(days=offset)
+        events = gcal.load_events(
+            day,
+            my_email=my_email,
+            blacklist=blacklist,
+            skip_past_events=(offset == 0),
+        )
+        timed = [e for e in events if "T" in e.get("start", "")]
+        if not timed:
+            continue
+        def _dt(ev):
+            dt = datetime.fromisoformat(ev["start"])
+            if dt.tzinfo is None:
+                dt = tz.localize(dt)
+            return dt
+        starts = [_dt(e) for e in timed]
+        eligible = [e for e, dtval in zip(timed, starts) if dtval >= current]
+        if not eligible:
+            continue
+        start_times = [_dt(e) for e in eligible]
+        earliest = min(start_times)
+        return [e for e, dtval in zip(eligible, start_times) if dtval == earliest]
+    return []
+
+
 @app.command("auth")
 def auth_command(
     scopes: List[str] = typer.Argument(..., help="Services to authorize (e.g., `calendar gmail`)")
 ) -> None:
     try:
         authorize(scopes)
+    except Exception as e:
+        handle_exception(e)
+
+
+@app.command("prepare-event")
+def prepare_event(
+    event: Optional[str] = typer.Option(
+        None,
+        help="Event start time to prepare for (YYYY-MM-DD HH:MM). If omitted, use the next upcoming event.",
+    ),
+    journal_dir: Optional[Path] = typer.Option(None, help="Directory with Markdown journal files"),
+    journal_days: int = typer.Option(21, help="Number of past days of journals to include"),
+    extras_dir: Optional[Path] = typer.Option(None, help="Directory with additional Markdown files"),
+    gmail_labels: Optional[List[str]] = typer.Option(None, help="List of additional Gmail labels to fetch emails from"),
+    my_email: Optional[str] = typer.Option(None, help="Your email address to filter declined calendar events"),
+    include_slack: bool = typer.Option(True, help="Include recent Slack messages"),
+    calendar_blacklist: Optional[List[str]] = typer.Option(
+        None,
+        help="Comma-separated list of keywords to blacklist from calendar events (overrides CALENDAR_EVENT_BLACKLIST)",
+    ),
+    slack_dm: bool = typer.Option(False, help="Send the output as a DM to yourself on Slack"),
+    save_markdown: bool = typer.Option(True, help="Save output to Markdown file"),
+    save_pdf: bool = typer.Option(False, help="Save output to PDF file"),
+    save_path: Optional[Path] = typer.Option(None, help="Custom file path or directory to save the output"),
+    prompt_file: Optional[Path] = typer.Option(None, help="Path to custom prompt file"),
+    model: str = typer.Option("gemini-2.5-pro-preview-05-06", help="Model to use for summarization"),
+    skip_path_checks: bool = typer.Option(False, help="Skip checks for existence of input and output paths"),
+    debug: bool = typer.Option(False, help="Enable debug logging"),
+    quiet: bool = typer.Option(False, help="Suppress output to stdout"),
+) -> None:
+
+    if debug:
+        enable_debug_logging()
+
+    if not skip_path_checks:
+        check_required_directories(journal_dir, extras_dir, save_path)
+
+    prompt_path = prompt_file or Path(__file__).parent / "prompts" / "prepare-event.prompt"
+    if not prompt_path.is_file():
+        typer.echo(f"Error: Default prompt file does not exist: {prompt_path}", err=True)
+        raise typer.Exit(code=1)
+
+    try:
+        tz = pytz.timezone("Europe/Amsterdam")
+        now = datetime.now(tz)
+        if event:
+            start_dt = _parse_event_dt(event)
+            events = _find_upcoming_events(start=start_dt, my_email=my_email, blacklist=calendar_blacklist)
+        else:
+            events = _find_upcoming_events(start=now, my_email=my_email, blacklist=calendar_blacklist)
+
+        if not events:
+            typer.echo("No upcoming events found", err=True)
+            raise typer.Exit(code=1)
+
+        extras_data = extras.load_extras([extras_dir] if extras_dir else [])
+        alias_map = extras.build_alias_map(extras_data)
+        journals_data = (
+            journals.load_journals(
+                journal_dir,
+                journal_days=journal_days,
+                alias_map=alias_map,
+            )
+            if journal_dir
+            else []
+        )
+        emails = gmail.load_emails(now.date(), gmail_labels=gmail_labels)
+        slack_data = slack_loader.load_slack_messages() if include_slack else {}
+        bio = os.getenv("BIO", "")
+
+        summary = summarize_event_preparation(
+            model=model,
+            events=events,
+            journals=journals_data,
+            extras=extras_data,
+            emails=emails,
+            slack=slack_data,
+            bio=bio,
+            prompt_path=prompt_path,
+            debug=debug,
+        )
+
+        if not quiet:
+            print(summary)
+
+        if slack_dm:
+            send_slack_dm(summary)
+
+        if save_markdown or save_pdf:
+            first_dt = datetime.fromisoformat(events[0]["start"])
+            if first_dt.tzinfo is None:
+                first_dt = tz.localize(first_dt)
+            filename = first_dt.strftime("%Y-%m-%d_%H%M_event.md")
+            out_path = resolve_output_path(save_path, first_dt.date(), custom_filename=filename)
+
+        if save_markdown:
+            out_path.write_text(summary)
+
+        if save_pdf:
+            convert_markdown_to_pdf(summary, out_path.with_suffix(".pdf"), debug=debug)
+
     except Exception as e:
         handle_exception(e)
 
