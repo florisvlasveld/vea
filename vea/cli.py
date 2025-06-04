@@ -49,6 +49,10 @@ def generate(
         None,
         help="Comma-separated list of keywords to blacklist from calendar events (overrides CALENDAR_EVENT_BLACKLIST)"
     ),
+    skip_past_events: bool = typer.Option(
+        False,
+        help="Skip calendar events earlier than the current time when generating today's brief",
+    ),
     save_markdown: bool = typer.Option(True, help="Save output to Markdown file"),
     save_pdf: bool = typer.Option(False, help="Save output to PDF file"),
     save_path: Optional[Path] = typer.Option(None, help="Custom file path or directory to save the output"),
@@ -83,7 +87,12 @@ def generate(
             if journal_dir
             else []
         )
-        calendars = gcal.load_events(target_date, my_email=my_email, blacklist=calendar_blacklist)
+        calendars = gcal.load_events(
+            target_date,
+            my_email=my_email,
+            blacklist=calendar_blacklist,
+            skip_past_events=skip_past_events,
+        )
         tasks = todoist.load_tasks(target_date, os.getenv("TODOIST_TOKEN", ""), todoist_project or "")
         emails = gmail.load_emails(target_date, gmail_labels=gmail_labels)
         slack_data = slack_loader.load_slack_messages() if include_slack else {}

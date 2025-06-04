@@ -62,6 +62,7 @@ vea daily \
   --save-path ~/DailyBrief/ \
   --todoist-project "My Todoist Project" \
   --calendar-blacklist "Lunch, Focus time" \
+  --skip-past-events \
   --save-markdown
 ```
 
@@ -71,6 +72,7 @@ vea daily \
 - `--extras-dir`: Directory with extra `.md` files (e.g. notes, projects)
 - `--todoist-project`: Filter tasks by Todoist project
 - `--calendar-blacklist`: Additional substrings to filter out calendar events (adds to .env)
+- `--skip-past-events`: Ignore calendar events that have already started today
 - `--model`: Use a specific LLM (e.g., `o4-mini`, `claude-3-7-sonnet-latest`, or `gemini-2.5-pro-preview-05-06`)
 - `--quiet`: Suppress printing output to the console
 - `--debug`: Outputs debug information to the console
