@@ -126,8 +126,8 @@ def load_completed_tasks(
         return []
 
     api = TodoistAPI(token)
-    if not hasattr(api, "get_completed_tasks"):
-        raise RuntimeError("todoist-api-python>=2.1 is required for completed task loading")
+    if not hasattr(api, "get_completed_tasks_by_due_date"):
+        raise RuntimeError("todoist-api-python>=3 is required for completed task loading")
 
     project_ids: Optional[Set[str]] = None
     if todoist_project:
@@ -136,10 +136,11 @@ def load_completed_tasks(
             return []
         project_ids = get_project_and_subproject_ids(api, root_project_id)
 
-    since = (datetime.now().date() - timedelta(days=lookback_days)).isoformat()
+    since = datetime.now() - timedelta(days=lookback_days)
+    until = datetime.now()
     try:
         raw_items = list(
-            api.get_completed_tasks(since=since, limit=200)
+            api.get_completed_tasks_by_due_date(since=since, until=until, limit=200)
         )
         all_items = flatten_items(raw_items)
     except Exception as e:
@@ -151,7 +152,9 @@ def load_completed_tasks(
         try:
             if project_ids is not None and item.project_id not in project_ids:
                 continue
-            completed_date = item.completed_at.split("T")[0] if hasattr(item, "completed_at") else ""
+            completed_date = (
+                item.completed_at.date().isoformat() if getattr(item, "completed_at", None) else ""
+            )
             tasks.append(
                 {
                     "content": item.content,
