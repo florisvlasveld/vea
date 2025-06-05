@@ -12,26 +12,14 @@ from slack_sdk.errors import SlackApiError
 logger = logging.getLogger(__name__)
 
 # === Configurable Constants ===
-WORKDAYS_LOOKBACK = 5
+DEFAULT_DAYS_LOOKBACK = 5
 CHANNEL_TYPES = ["public_channel", "private_channel", "im", "mpim"]
 
 
-def calculate_lookback_start(now: datetime, workdays: int) -> datetime:
-    current = now
-    workdays_remaining = workdays
-    while workdays_remaining > 0:
-        current -= timedelta(days=1)
-        if current.weekday() < 5:
-            workdays_remaining -= 1
-    if now.weekday() in (0, 1):
-        while current.weekday() > 4:
-            current -= timedelta(days=1)
-    logger.debug(
-        "Fetching messages from: %s to %s",
-        current.isoformat(),
-        now.isoformat(),
-    )
-    return current
+def calculate_lookback_start(now: datetime, days: int) -> datetime:
+    start = now - timedelta(days=days)
+    logger.debug("Fetching messages from: %s to %s", start.isoformat(), now.isoformat())
+    return start
 
 
 def safe_slack_call(client_func, max_retries: int = 5, **kwargs):
@@ -140,7 +128,9 @@ def fetch_messages_from_channel(client: WebClient, channel: Dict[str, Any], conv
     return messages if messages else None
 
 
-def load_slack_messages(workdays_lookback: int = WORKDAYS_LOOKBACK) -> Dict[str, List[Dict[str, Any]]]:
+def load_slack_messages(
+    days_lookback: int = DEFAULT_DAYS_LOOKBACK,
+) -> Dict[str, List[Dict[str, Any]]]:
     logger.info("Starting Slack message load...")
     token = os.environ.get("SLACK_TOKEN")
     if not token:
@@ -149,7 +139,7 @@ def load_slack_messages(workdays_lookback: int = WORKDAYS_LOOKBACK) -> Dict[str,
 
     client = WebClient(token=token)
     now = datetime.now()
-    oldest_ts = calculate_lookback_start(now, workdays_lookback).timestamp()
+    oldest_ts = calculate_lookback_start(now, days_lookback).timestamp()
     latest_ts = now.timestamp()
     user_map = build_user_map(client)
     results = {}

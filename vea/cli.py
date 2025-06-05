@@ -71,6 +71,10 @@ def generate(
     todoist_project: Optional[str] = typer.Option(None, help="Name of the Todoist project to filter tasks by"),
     my_email: Optional[str] = typer.Option(None, help="Your email address to filter declined calendar events"),
     include_slack: bool = typer.Option(True, help="Include recent Slack messages"),
+    slack_days: int = typer.Option(
+        slack_loader.DEFAULT_DAYS_LOOKBACK,
+        help="Number of past days of Slack messages to load",
+    ),
     calendar_blacklist: Optional[List[str]] = typer.Option(
         None,
         help="Comma-separated list of keywords to blacklist from calendar events (overrides CALENDAR_EVENT_BLACKLIST)"
@@ -122,7 +126,11 @@ def generate(
         )
         tasks = todoist.load_tasks(target_date, todoist_project=todoist_project or "")
         emails = gmail.load_emails(target_date, gmail_labels=gmail_labels)
-        slack_data = slack_loader.load_slack_messages() if include_slack else {}
+        slack_data = (
+            slack_loader.load_slack_messages(days_lookback=slack_days)
+            if include_slack
+            else {}
+        )
         bio = os.getenv("BIO", "")
 
         summary = summarize_daily(
@@ -251,6 +259,10 @@ def prepare_event(
         None,
         help="Comma-separated list of keywords to blacklist from calendar events (overrides CALENDAR_EVENT_BLACKLIST)",
     ),
+    slack_days: int = typer.Option(
+        3,
+        help="Number of past days of Slack messages to load",
+    ),
     slack_dm: bool = typer.Option(False, help="Send the output as a DM to yourself on Slack"),
     save_markdown: bool = typer.Option(True, help="Save output to Markdown file"),
     save_pdf: bool = typer.Option(False, help="Save output to PDF file"),
@@ -312,7 +324,11 @@ def prepare_event(
         if first_dt.tzinfo is None:
             first_dt = first_dt.replace(tzinfo=tz)
         tasks = todoist.load_tasks(first_dt.date(), todoist_project=todoist_project or "")
-        slack_data = slack_loader.load_slack_messages(workdays_lookback=3) if include_slack else {}
+        slack_data = (
+            slack_loader.load_slack_messages(days_lookback=slack_days)
+            if include_slack
+            else {}
+        )
         bio = os.getenv("BIO", "")
 
         summary = summarize_event_preparation(

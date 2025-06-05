@@ -73,6 +73,7 @@ Below is a complete list of options for `vea daily` (run `vea daily --help` to s
 - `--todoist-project` – Filter tasks by Todoist project
 - `--my-email` – Your email address (used to ignore declined events)
 - `--include-slack / --no-include-slack` – Include recent Slack messages (default: true)
+- `--slack-days` – Number of past days of Slack messages to load (default: 5)
 - `--calendar-blacklist` – Comma-separated substrings to filter out calendar events (overrides `CALENDAR_EVENT_BLACKLIST`)
 - `--skip-past-events` – Ignore calendar events that have already started today
 - `--save-markdown / --no-save-markdown` – Write the summary to a Markdown file (default: true)
@@ -122,6 +123,7 @@ Key options include:
 - `--lookahead-minutes` – How far ahead to search for the next event
 - `--journal-dir` – Directory with Markdown journal files
 - `--journal-days` – Number of past journal days to include (default: 5)
+- `--slack-days` – Number of past days of Slack messages to load (default: 3)
 - `--slack-dm` – Send the output as a Slack DM to yourself
 
 ### AI Summary Engine
@@ -217,6 +219,10 @@ By default, Slack loading is enabled when you run Vea. If you want to skip it:
 ```bash
 vea daily --include-slack False
 ```
+
+Use `--slack-days` to control how many past days of Slack history are
+included. The default is 5 days for the `daily` command and 3 days
+for `prepare-event`.
 
 
 ## A note from the author
