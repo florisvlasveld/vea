@@ -2,6 +2,13 @@
 
 Generate a personalized executive daily briefing, a weekly summary, or a last-minute briefing for a specific calendar event, all with a single command-line tool. Pulls in signals from your Google Calendar, Gmail, Todoist, local Markdown notes, and Slack – then condenses it all using AI into readable summaries.
 
+Supported commands:
+
+- `vea daily` – Generate a daily briefing
+- `vea weekly` – Summarize your week
+- `vea prepare-event` – Prepare for an upcoming meeting
+- `vea check-for-tasks` – Detect untracked or unfinished to-dos based on your recent activity
+
 
 ## Setup
 
@@ -125,6 +132,16 @@ Key options include:
 - `--journal-days` – Number of past journal days to include (default: 5)
 - `--slack-days` – Number of past days of Slack messages to load (default: 3)
 - `--slack-dm` – Send the output as a Slack DM to yourself
+
+### Check for forgotten tasks
+
+Use `vea check-for-tasks` to scan your journals, emails, Slack messages and Todoist for anything you may have missed.
+
+```bash
+vea check-for-tasks --journal-dir ~/Logseq/journals --todoist-lookback-days 10
+```
+
+This command detects untracked or unfinished to-dos based on your recent activity. Use `--todoist-lookback-days` to set how far back to include completed Todoist tasks (default: 14 days).
 
 ### AI Summary Engine
 

@@ -12,6 +12,7 @@ APP_ROOT = Path(__file__).resolve().parents[2]
 PROMPT_TEMPLATE_PATH = APP_ROOT / "vea" / "prompts" / "daily-default.prompt"
 APP_WEEKLY_PROMPT_PATH = APP_ROOT / "vea/prompts/weekly-default.prompt"
 APP_PREPARE_EVENT_PROMPT_PATH = APP_ROOT / "vea/prompts/prepare-event.prompt"
+APP_CHECK_FOR_TASKS_PROMPT_PATH = APP_ROOT / "vea/prompts/check-for-tasks-default.prompt"
 
 
 def load_prompt_template(path: Optional[Path] = None) -> str:
@@ -147,6 +148,38 @@ def summarize_event_preparation(
         extras=json.dumps(extras, indent=2, default=str, ensure_ascii=False),
         emails=json.dumps(emails, indent=2, default=str, ensure_ascii=False),
         tasks=json.dumps(tasks, indent=2, default=str, ensure_ascii=False),
+        slack=json.dumps(slack, indent=2, default=str, ensure_ascii=False) if slack else "",
+    )
+
+    if debug and not quiet:
+        logger.debug("========== BEGIN PROMPT ==========")
+        logger.debug(prompt)
+        logger.debug("=========== END PROMPT ===========")
+
+    return run_llm_prompt(prompt, model, quiet=quiet)
+
+
+def summarize_check_for_tasks(
+    model: str,
+    journals: List,
+    emails: Dict,
+    completed_tasks: List,
+    future_tasks: List,
+    slack: Optional[Dict[str, List[Dict[str, str]]]] = None,
+    bio: str = "",
+    quiet: bool = False,
+    debug: bool = False,
+    prompt_path: Optional[Path] = None,
+) -> str:
+    """Identify potentially forgotten or uncaptured tasks."""
+
+    template = load_prompt_template(prompt_path or APP_CHECK_FOR_TASKS_PROMPT_PATH)
+    prompt = template.format(
+        bio=bio,
+        journals=json.dumps(journals, indent=2, default=str, ensure_ascii=False),
+        emails=json.dumps(emails, indent=2, default=str, ensure_ascii=False),
+        completed_tasks=json.dumps(completed_tasks, indent=2, default=str, ensure_ascii=False),
+        future_tasks=json.dumps(future_tasks, indent=2, default=str, ensure_ascii=False),
         slack=json.dumps(slack, indent=2, default=str, ensure_ascii=False) if slack else "",
     )
 

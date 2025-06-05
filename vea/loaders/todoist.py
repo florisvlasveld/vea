@@ -1,5 +1,5 @@
 import logging
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from itertools import chain
 from typing import List, Set, Optional
 
@@ -107,6 +107,113 @@ def load_tasks(target_date: date, todoist_project: Optional[str] = None, token_u
                     "project_id": task.project_id,
                     "priority": adjusted_priority,
                 })
+        except Exception as e:
+            logger.warning(f"Skipping task due to error: {e}", exc_info=e)
+            continue
+
+    return tasks
+
+
+def load_completed_tasks(
+    lookback_days: int = 14,
+    todoist_project: Optional[str] = None,
+    token_unused: Optional[str] = None,
+) -> List[dict]:
+    """Load tasks completed within the lookback window."""
+    token = os.getenv("TODOIST_TOKEN", "")
+    if not token:
+        logger.warning("Todoist token not provided; skipping task loading.")
+        return []
+
+    api = TodoistAPI(token)
+
+    project_ids: Optional[Set[str]] = None
+    if todoist_project:
+        root_project_id = get_project_id_by_name(api, todoist_project)
+        if not root_project_id:
+            return []
+        project_ids = get_project_and_subproject_ids(api, root_project_id)
+
+    since = (datetime.now().date() - timedelta(days=lookback_days)).isoformat()
+    try:
+        raw_items = list(
+            api.get_completed_tasks(since=since, limit=200)
+        )
+        all_items = flatten_items(raw_items)
+    except Exception as e:
+        logger.error("Failed to fetch completed tasks from Todoist", exc_info=e)
+        return []
+
+    tasks = []
+    for item in all_items:
+        try:
+            if project_ids is not None and item.project_id not in project_ids:
+                continue
+            completed_date = item.completed_at.split("T")[0] if hasattr(item, "completed_at") else ""
+            tasks.append(
+                {
+                    "content": item.content,
+                    "description": getattr(item, "description", ""),
+                    "completed": completed_date,
+                    "project_id": item.project_id,
+                }
+            )
+        except Exception as e:
+            logger.warning(f"Skipping completed task due to error: {e}", exc_info=e)
+            continue
+
+    return tasks
+
+
+def load_future_tasks(
+    todoist_project: Optional[str] = None,
+    token_unused: Optional[str] = None,
+) -> List[dict]:
+    """Load incomplete tasks scheduled after today."""
+    token = os.getenv("TODOIST_TOKEN", "")
+    if not token:
+        logger.warning("Todoist token not provided; skipping task loading.")
+        return []
+
+    api = TodoistAPI(token)
+
+    project_ids: Optional[Set[str]] = None
+    if todoist_project:
+        root_project_id = get_project_id_by_name(api, todoist_project)
+        if not root_project_id:
+            return []
+        project_ids = get_project_and_subproject_ids(api, root_project_id)
+
+    try:
+        raw_tasks = list(api.get_tasks())
+        all_tasks = flatten_items(raw_tasks)
+    except Exception as e:
+        logger.error("Failed to fetch tasks from Todoist", exc_info=e)
+        return []
+
+    today = datetime.now().date()
+    tasks = []
+    for task in all_tasks:
+        try:
+            due_date = task.due.date if task.due else None
+            if isinstance(due_date, datetime):
+                due_date = due_date.date()
+
+            include = bool(due_date and due_date > today)
+            if project_ids is not None:
+                include = include and (task.project_id in project_ids)
+
+            if include:
+                adjusted_priority = 5 - task.priority
+                tasks.append(
+                    {
+                        "content": task.content,
+                        "description": task.description or "",
+                        "due": due_date.isoformat(),
+                        "project_id": task.project_id,
+                        "priority": adjusted_priority,
+                    }
+                )
         except Exception as e:
             logger.warning(f"Skipping task due to error: {e}", exc_info=e)
             continue
