@@ -18,10 +18,10 @@ app = typer.Typer()
 @app.command("check-for-tasks")
 def check_for_tasks(
     journal_dir: Optional[Path] = typer.Option(None, help="Directory with Markdown journal files"),
-    journal_days: int = typer.Option(21, help="Number of past days of journals to include"),
+    journal_days: int = typer.Option(7, help="Number of past days of journals to include"),
     gmail_labels: Optional[List[str]] = typer.Option(None, help="List of additional Gmail labels to fetch emails from"),
     todoist_project: Optional[str] = typer.Option(None, help="Name of the Todoist project to filter tasks by"),
-    todoist_lookback_days: int = typer.Option(14, help="Number of days to look back for completed Todoist tasks"),
+    todoist_lookback_days: int = typer.Option(7, help="Number of days to look back for completed Todoist tasks"),
     include_slack: bool = typer.Option(True, help="Include recent Slack messages"),
     slack_days: int = typer.Option(
         slack_loader.DEFAULT_DAYS_LOOKBACK,
