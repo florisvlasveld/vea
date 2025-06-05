@@ -8,21 +8,63 @@ Return a concise bullet list of potential tasks the leader might have forgotten 
 
 ---
 
+**Style Guidelines:**
+- Use a clear, friendly, and concise tone.
+- **Make sure to always output correct and valid Markdown syntax.**
+- When rendering bulleted lists, use exactly one space between the hyphen and the content. Format must be: `- Item`.
+- Do not use multiple spaces after a hyphen in bullet lists or checkboxes (e.g., avoid `-   Item` or `-   [ ] Task`).
+- Use bold sparingly and only where already instructed.
+- Do **not** include `markdown` as the first word in the output.
+- Do not add any introductionary remarks or commentary.
+- Do not add any closing remarks, summaries, sign-offs, or additional commentary. The output must end immediately after the last required section.
+
+---
+
 ### Collected Data
 
 == Journal Entries (JSON) ==
+- Journal entries are provided as structured data with `filename`, `content`, and `date` (format `YYYY_MM_DD`).
+- Journals follow the Logseq outliner format with indentation used to indicate hierarchy. Child bullets are nested under parent topics using consistent indentation. Treat deeper levels as subpoints or elaboration.
+
 {journals}
 
+
 == Emails (JSON) ==
+- Emails are structured with `subject`, `from` (sender), `date`, and `body`. Only plain text content is included.
+- In the JSON structure below, emails are in distinct categories, such as `inbox` and `sent`.
+- You may extract actionable tasks from these emails for inclusion in the Tasks section, if they are clearly addressed to the leader and require action. Emails in `sent` are **not** relevant for task extraction.
+
 {emails}
 
+
 == Slack Messages (JSON) ==
+- Slack messages are grouped by channel name or DM identifier. Each message includes:
+    - `user`: the display name of the sender
+    - `timestamp`: ISO timestamp
+    - `text`: plain text content of the message
+    - `replies` (if any): replies to the message
+- Message text may includes 'mentions', such as `@John Doe`.
+
 {slack}
 
 == Completed Todoist Tasks (JSON) ==
+Each task is a dictionary with the following fields:
+- `content`: the task title  
+- `description`: optional longer task text  
+- `completed`: the completion date (YYYY-MM-DD)  
+- `project_id`: identifier for the project the task belongs to  
+
 {completed_tasks}
 
+
 == Open Todoist Tasks (JSON) ==
+Each task is a dictionary with the following fields:
+- `content`: the task title  
+- `description`: optional longer task text  
+- `due`: the due date (YYYY-MM-DD)  
+- `project_id`: identifier for the project the task belongs to  
+- `priority`: integer from 1 (highest) to 4 (lowest)
+
 {open_tasks}
 
 ---
