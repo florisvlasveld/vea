@@ -66,7 +66,7 @@ def check_for_tasks(
             lookback_days=todoist_lookback_days,
             todoist_project=todoist_project or "",
         )
-        future_tasks = todoist.load_future_tasks(todoist_project=todoist_project or "")
+        open_tasks = todoist.load_open_tasks(todoist_project=todoist_project or "")
         bio = os.getenv("BIO", "")
 
         summary = summarize_check_for_tasks(
@@ -74,7 +74,7 @@ def check_for_tasks(
             journals=journals_data,
             emails=emails,
             completed_tasks=completed_tasks,
-            future_tasks=future_tasks,
+            open_tasks=open_tasks,
             slack=slack_data,
             bio=bio,
             prompt_path=prompt_path,

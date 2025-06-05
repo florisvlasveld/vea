@@ -164,7 +164,7 @@ def summarize_check_for_tasks(
     journals: List,
     emails: Dict,
     completed_tasks: List,
-    future_tasks: List,
+    open_tasks: List,
     slack: Optional[Dict[str, List[Dict[str, str]]]] = None,
     bio: str = "",
     quiet: bool = False,
@@ -179,7 +179,7 @@ def summarize_check_for_tasks(
         journals=json.dumps(journals, indent=2, default=str, ensure_ascii=False),
         emails=json.dumps(emails, indent=2, default=str, ensure_ascii=False),
         completed_tasks=json.dumps(completed_tasks, indent=2, default=str, ensure_ascii=False),
-        future_tasks=json.dumps(future_tasks, indent=2, default=str, ensure_ascii=False),
+        open_tasks=json.dumps(open_tasks, indent=2, default=str, ensure_ascii=False),
         slack=json.dumps(slack, indent=2, default=str, ensure_ascii=False) if slack else "",
     )
 
