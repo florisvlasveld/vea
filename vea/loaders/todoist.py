@@ -126,6 +126,8 @@ def load_completed_tasks(
         return []
 
     api = TodoistAPI(token)
+    if not hasattr(api, "get_completed_tasks"):
+        raise RuntimeError("todoist-api-python>=2.1 is required for completed task loading")
 
     project_ids: Optional[Set[str]] = None
     if todoist_project:
