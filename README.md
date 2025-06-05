@@ -129,8 +129,8 @@ Key options include:
 - `--event` – Event start time like `2025-05-28 14:00`
 - `--lookahead-minutes` – How far ahead to search for the next event
 - `--journal-dir` – Directory with Markdown journal files
-- `--journal-days` – Number of past journal days to include (default: 5)
-- `--slack-days` – Number of past days of Slack messages to load (default: 3)
+- `--journal-days` – Number of past journal days to include (default: 21)
+- `--slack-days` – Number of past days of Slack messages to load (default: 5)
 - `--slack-dm` – Send the output as a Slack DM to yourself
 
 ### Check for forgotten tasks

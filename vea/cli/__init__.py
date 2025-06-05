@@ -1,5 +1,5 @@
 import typer
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
 from ..loaders import gcal, gmail, journals, extras, todoist, slack as slack_loader
 
@@ -8,7 +8,7 @@ from .utils import _find_upcoming_events
 
 app = typer.Typer(help="Vea: Generate a personalized daily briefing or weekly summary.")
 
-load_dotenv()
+load_dotenv(find_dotenv(usecwd=True))
 
 if hasattr(app, "add_typer"):
     # Typer is installed: mount sub-apps using their default command names

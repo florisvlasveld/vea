@@ -30,7 +30,13 @@ sys.modules.setdefault(
     ),
 )
 
-sys.modules.setdefault("dotenv", SimpleNamespace(load_dotenv=lambda *a, **k: None))
+sys.modules.setdefault(
+    "dotenv",
+    SimpleNamespace(
+        load_dotenv=lambda *a, **k: None,
+        find_dotenv=lambda *a, **k: "",
+    ),
+)
 sys.modules.setdefault("todoist_api_python.api", SimpleNamespace(TodoistAPI=object))
 import types
 _slack_module = types.ModuleType("slack_sdk")
