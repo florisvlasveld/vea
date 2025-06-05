@@ -11,11 +11,11 @@ app = typer.Typer(help="Vea: Generate a personalized daily briefing or weekly su
 load_dotenv()
 
 if hasattr(app, "add_typer"):
-    # Typer available: register sub-apps normally
-    app.add_typer(auth.app, name="auth")
-    app.add_typer(daily.app, name="daily")
-    app.add_typer(weekly.app, name="weekly")
-    app.add_typer(prepare_event.app, name="prepare-event")
+    # Typer is installed: mount sub-apps using their default command names
+    app.add_typer(auth.app)
+    app.add_typer(daily.app)
+    app.add_typer(weekly.app)
+    app.add_typer(prepare_event.app)
 else:  # Fallback for minimal Typer stubs in tests
     app.command("auth")(auth.auth_command)
     app.command("daily")(daily.generate)
