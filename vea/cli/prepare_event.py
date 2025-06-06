@@ -45,7 +45,7 @@ def prepare_event(
     save_pdf: bool = typer.Option(False, help="Save output to PDF file"),
     save_path: Optional[Path] = typer.Option(None, help="Custom file path or directory to save the output"),
     prompt_file: Optional[Path] = typer.Option(None, help="Path to custom prompt file"),
-    model: str = typer.Option("gemini-2.5-pro-preview-05-06", help="Model to use for summarization"),
+    model: str = typer.Option("gemini-2.5-pro-preview-06-05", help="Model to use for summarization"),
     skip_path_checks: bool = typer.Option(False, help="Skip checks for existence of input and output paths"),
     debug: bool = typer.Option(False, help="Enable debug logging"),
     quiet: bool = typer.Option(False, help="Suppress output to stdout"),

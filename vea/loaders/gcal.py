@@ -13,8 +13,7 @@ logger = logging.getLogger(__name__)
 
 LOCAL_TZ = ZoneInfo(os.getenv("TIMEZONE", "Europe/Amsterdam"))
 
-DEFAULT_BLACKLIST = [
-]
+DEFAULT_BLACKLIST = []
 
 TOKEN_PATH = Path(".credentials/calendar_token.json")
 

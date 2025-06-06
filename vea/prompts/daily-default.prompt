@@ -112,7 +112,7 @@ Each task is a dictionary with the following fields:
 {emails}
 
 
-== Journals (JSON) ==
+== Journals Entries (JSON) ==
 - Journal entries are provided as structured data with `filename`, `content`, and `date` (format `YYYY_MM_DD`).
 - Journals follow the Logseq outliner format with indentation used to indicate hierarchy. Child bullets are nested under parent topics using consistent indentation. Treat deeper levels as subpoints or elaboration.
 - If the journal entry for {date} contains a line that begins with `Vea` or `[[Vea]]`, treat it as a **binding instruction** written directly to you. These instructions may request:

@@ -15,7 +15,6 @@ Return a concise bullet list of potential tasks the leader might have forgotten 
 - Do not use multiple spaces after a hyphen in bullet lists or checkboxes (e.g., avoid `-   Item` or `-   [ ] Task`).
 - Use bold sparingly and only where already instructed.
 - Do **not** include `markdown` as the first word in the output.
-- Do not add any introductionary remarks or commentary.
 - Do not add any closing remarks, summaries, sign-offs, or additional commentary. The output must end immediately after the last required section.
 
 ---
