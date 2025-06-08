@@ -30,11 +30,28 @@ def run_llm_prompt(prompt: str, model: Optional[str] = None, *, quiet: bool = Fa
         chat = model_obj.start_chat(history=[])
         for attempt in range(5):
             try:
-                response = chat.send_message(prompt, generation_config={"temperature": 0.3, "max_output_tokens": 16384})
+                response = chat.send_message(
+                    prompt,
+                    generation_config={"temperature": 0.3, "max_output_tokens": 16384},
+                )
+                usage = getattr(response, "usage_metadata", None)
+                if usage:
+                    prompt_tokens = getattr(usage, "prompt_token_count", None)
+                    completion_tokens = getattr(usage, "candidates_token_count", None)
+                    total_tokens = getattr(usage, "total_token_count", None)
+                    logger.info(
+                        "Gemini tokens used: prompt=%s, response=%s, total=%s",
+                        prompt_tokens,
+                        completion_tokens,
+                        total_tokens if total_tokens is not None else ((prompt_tokens or 0) + (completion_tokens or 0)),
+                    )
+
                 return response.text.strip()
             except Exception as e:
                 wait = 2 ** attempt
-                logger.warning(f"Gemini request failed (attempt {attempt + 1}): {e}; retrying in {wait}s")
+                logger.warning(
+                    f"Gemini request failed (attempt {attempt + 1}): {e}; retrying in {wait}s"
+                )
                 time.sleep(wait)
         raise RuntimeError("Failed to get a response from Gemini after multiple attempts.")
 
@@ -47,8 +64,25 @@ def run_llm_prompt(prompt: str, model: Optional[str] = None, *, quiet: bool = Fa
                     model=model,
                     max_tokens=16384,
                     temperature=0.3,
-                    messages=[{"role": "user", "content": prompt}]
+                    messages=[{"role": "user", "content": prompt}],
                 )
+
+                usage = getattr(result, "usage", None)
+                if usage:
+                    prompt_tokens = getattr(usage, "input_tokens", None)
+                    completion_tokens = getattr(usage, "output_tokens", None)
+                    total_tokens = (
+                        (prompt_tokens or 0) + (completion_tokens or 0)
+                        if prompt_tokens is not None and completion_tokens is not None
+                        else None
+                    )
+                    logger.info(
+                        "Claude tokens used: prompt=%s, response=%s, total=%s",
+                        prompt_tokens,
+                        completion_tokens,
+                        total_tokens,
+                    )
+
                 return result.content[0].text.strip()
             except Exception as e:
                 wait = 2 ** attempt
@@ -72,6 +106,16 @@ def run_llm_prompt(prompt: str, model: Optional[str] = None, *, quiet: bool = Fa
                 kwargs["max_tokens"] = 16384
 
             response = client.chat.completions.create(**kwargs)
+
+            usage = getattr(response, "usage", None)
+            if usage:
+                logger.info(
+                    "OpenAI tokens used: prompt=%s, completion=%s, total=%s",
+                    getattr(usage, "prompt_tokens", None),
+                    getattr(usage, "completion_tokens", None),
+                    getattr(usage, "total_tokens", None),
+                )
+
             return response.choices[0].message.content.strip()
 
         except Exception as e:
