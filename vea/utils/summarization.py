@@ -1,3 +1,5 @@
+"""Helpers for constructing prompts and calling the LLM."""
+
 import logging
 import json
 from datetime import date
@@ -16,6 +18,7 @@ APP_CHECK_FOR_TASKS_PROMPT_PATH = APP_ROOT / "vea/prompts/check-for-tasks-defaul
 
 
 def load_prompt_template(path: Optional[Path] = None) -> str:
+    """Return the text of the prompt template located at ``path``."""
     template_path = path or PROMPT_TEMPLATE_PATH
     with open(template_path, encoding="utf-8") as f:
         return f.read()
@@ -33,6 +36,7 @@ def render_daily_prompt(
     extras: str,
     slack: str = ""
 ) -> str:
+    """Fill ``template`` with the provided serialized data chunks."""
     return template.format(
         date=str(date),
         bio=bio,
@@ -41,22 +45,8 @@ def render_daily_prompt(
         emails=emails,
         journals=journals,
         extras=extras,
-        slack=slack
+        slack=slack,
     )
-
-'''
-prompt = render_daily_prompt(
-        prompt_template,
-        date=date,
-        bio=bio,
-        calendars=str(calendars),
-        tasks=str(tasks),
-        emails=str(emails),
-        journals=str(journals),
-        extras=str(extras),
-        slack=str(slack) if slack else ""
-    )
-'''
 
 
 def summarize_daily(
@@ -73,6 +63,7 @@ def summarize_daily(
     debug: bool = False,
     prompt_path: Optional[Path] = None,
 ) -> str:
+    """Render and submit the daily prompt with the selected model."""
 
     prompt_template = load_prompt_template(prompt_path)
     prompt = render_daily_prompt(
@@ -108,6 +99,8 @@ def summarize_weekly(
     debug: bool = False,
     prompt_path: Optional[Path] = None,
 ) -> str:
+    """Produce a narrative summary for the specified week."""
+
     template = load_prompt_template(prompt_path or APP_WEEKLY_PROMPT_PATH)
     prompt = template.format(
         week=week,
