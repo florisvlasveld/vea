@@ -41,22 +41,8 @@ def render_daily_prompt(
         emails=emails,
         journals=journals,
         extras=extras,
-        slack=slack
+        slack=slack,
     )
-
-'''
-prompt = render_daily_prompt(
-        prompt_template,
-        date=date,
-        bio=bio,
-        calendars=str(calendars),
-        tasks=str(tasks),
-        emails=str(emails),
-        journals=str(journals),
-        extras=str(extras),
-        slack=str(slack) if slack else ""
-    )
-'''
 
 
 def summarize_daily(

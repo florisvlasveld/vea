@@ -12,6 +12,9 @@ from ..utils.event_utils import (
     find_upcoming_events,
     find_current_events,
 )
+from ..utils.filtering import run_pipeline
+
+import logging
 from ..utils.output_utils import resolve_output_path
 from ..utils.error_utils import enable_debug_logging, handle_exception
 from ..utils.summarization import summarize_event_preparation
@@ -20,6 +23,7 @@ from ..utils.pdf_utils import convert_markdown_to_pdf
 from ..utils.generic_utils import check_required_directories
 
 app = typer.Typer()
+logger = logging.getLogger(__name__)
 
 
 @app.command("prepare-event")
@@ -53,6 +57,8 @@ def prepare_event(
     save_path: Optional[Path] = typer.Option(None, help="Custom file path or directory to save the output"),
     prompt_file: Optional[Path] = typer.Option(None, help="Path to custom prompt file"),
     model: str = typer.Option("gemini-2.5-pro-preview-06-05", help="Model to use for summarization"),
+    token_budget: int = typer.Option(10000, help="Token budget for filtering contextual documents"),
+    focus_topics_override: Optional[List[str]] = typer.Option(None, help="Override focus topics for filtering"),
     skip_path_checks: bool = typer.Option(False, help="Skip checks for existence of input and output paths"),
     debug: bool = typer.Option(False, help="Enable debug logging"),
     quiet: bool = typer.Option(False, help="Suppress output to stdout"),
@@ -128,16 +134,116 @@ def prepare_event(
             if include_slack
             else {}
         )
+        focus_topics: List[str] = []
+        for ev in events:
+            logger.debug(
+                "Event: summary=%s desc=%s", ev.get("summary"), ev.get("description")
+            )
+            if ev.get("summary"):
+                focus_topics.append(ev["summary"])
+            if ev.get("description"):
+                focus_topics.append(ev["description"])
+            for at in ev.get("attendees", []):
+                for key in ("name", "displayName", "email"):
+                    val = at.get(key)
+                    if val:
+                        focus_topics.append(val)
+            org = ev.get("organizer", {})
+            for key in ("displayName", "email"):
+                val = org.get(key)
+                if val:
+                    focus_topics.append(val)
+        focus_topics.extend(alias_map.keys())
+        if focus_topics_override:
+            focus_topics = list(focus_topics_override)
+
+        logger.debug("Focus topics: %s", focus_topics)
+
+        def _filter_group(name: str, docs: List[dict]) -> List[dict]:
+            if not docs:
+                logger.warning("No %s documents to filter", name)
+                return []
+            result = run_pipeline(
+                docs,
+                focus_topics,
+                token_budget=token_budget,
+                return_scores=debug,
+            )
+            logger.debug(
+                "%s docs before=%d after=%d tokens=%d",
+                name,
+                len(docs),
+                len(result["documents"]),
+                result["total_tokens"],
+            )
+            for d in result["documents"]:
+                logger.debug(
+                    "%s kept %s score=%.2f tokens=%d",
+                    name,
+                    d["id"],
+                    d.get("combined_score", 0.0),
+                    d["token_count"],
+                )
+            if not result["documents"]:
+                logger.warning("No %s documents retained after filtering", name)
+            return [d["original"] for d in result["documents"]]
+
+        journal_docs = [
+            {"id": j["filename"], "type": "journal", "content": j["content"], "metadata": {"date": str(j.get("date"))}, "original": j}
+            for j in journals_data
+        ]
+        extras_docs = [
+            {"id": e["filename"], "type": "extra", "content": e["content"], "metadata": {"aliases": e.get("aliases", [])}, "original": e}
+            for e in extras_data
+        ]
+        email_docs = [
+            {
+                "id": f"{label}-{i}",
+                "type": "email",
+                "content": f"{m.get('subject','')} {m.get('body','')}",
+                "metadata": {**m, "label": label},
+                "original": m,
+            }
+            for label, msgs in emails.items()
+            for i, m in enumerate(msgs)
+        ]
+        slack_docs = [
+            {
+                "id": f"{chan}-{i}",
+                "type": "slack",
+                "content": msg.get("text", "") + " " + " ".join(r.get("text", "") for r in msg.get("replies", [])),
+                "metadata": {**msg, "channel": chan},
+                "original": msg,
+            }
+            for chan, msgs in slack_data.items()
+            for i, msg in enumerate(msgs)
+        ]
+
+        filtered_journals = _filter_group("journal", journal_docs)
+        filtered_extras = _filter_group("extra", extras_docs)
+        filtered_email_docs = _filter_group("email", email_docs)
+        filtered_slack_docs = _filter_group("slack", slack_docs)
+
+        filtered_emails: dict[str, List[dict]] = {}
+        for d in filtered_email_docs:
+            label = d.get("label", "inbox")
+            filtered_emails.setdefault(label, []).append(d)
+
+        filtered_slack: dict[str, List[dict]] = {}
+        for d in filtered_slack_docs:
+            chan = d.get("channel", "")
+            filtered_slack.setdefault(chan, []).append(d)
+
         bio = os.getenv("BIO", "")
 
         summary = summarize_event_preparation(
             model=model,
             events=events,
-            journals=journals_data,
-            extras=extras_data,
-            emails=emails,
+            journals=filtered_journals,
+            extras=filtered_extras,
+            emails=filtered_emails,
             tasks=tasks,
-            slack=slack_data,
+            slack=filtered_slack,
             bio=bio,
             prompt_path=prompt_path,
             quiet=quiet,
