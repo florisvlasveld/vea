@@ -93,6 +93,7 @@ sys.modules.setdefault("google.oauth2.credentials", SimpleNamespace(Credentials=
 sys.modules.setdefault("googleapiclient.discovery", SimpleNamespace(build=_DummyDiscovery.build))
 
 import vea.cli as cli
+import vea.utils.event_utils as event_utils
 
 
 def test_find_upcoming_events_filters(monkeypatch):
@@ -132,3 +133,37 @@ def test_find_upcoming_events_handles_none_summary(monkeypatch):
 
     assert len(result) == 1
     assert result[0]["summary"] == "Valid Meeting"
+
+
+def test_find_current_events_returns_only_running(monkeypatch):
+    tz = ZoneInfo("Europe/Amsterdam")
+    now = datetime(2025, 5, 1, 12, 30, tzinfo=tz)
+
+    events = [
+        {"summary": "Past", "start": "2025-05-01T11:00:00", "end": "2025-05-01T11:30:00"},
+        {"summary": "Running", "start": "2025-05-01T12:00:00", "end": "2025-05-01T13:00:00"},
+        {"summary": "Future", "start": "2025-05-01T14:00:00", "end": "2025-05-01T15:00:00"},
+    ]
+
+    def dummy_load_events(*args, **kwargs):
+        return events
+
+    class FixedDateTime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return now
+
+    monkeypatch.setattr(cli.gcal, "load_events", dummy_load_events)
+    monkeypatch.setattr(event_utils, "datetime", FixedDateTime)
+
+    result = cli._find_current_events(my_email=None, blacklist=None)
+
+    assert len(result) == 1
+    assert result[0]["summary"] == "Running"
+
+
+def test_parse_event_dt_parses_custom_time(monkeypatch):
+    monkeypatch.setenv("TIMEZONE", "UTC")
+    dt = event_utils.parse_event_dt("2025-05-01 09:15")
+    assert dt.tzinfo == ZoneInfo("UTC")
+    assert dt.hour == 9 and dt.minute == 15

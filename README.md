@@ -119,14 +119,14 @@ Run `vea weekly --help` to see all options. Key options include:
 
 ### Prepare for an event
 
-Use `vea prepare-event` to get a quick briefing before a meeting. The command collects emails, tasks, notes and Slack messages around the event time and summarizes them with your LLM of choice. If you don't specify `--event`, the next upcoming calendar entry is used.
+Use `vea prepare-event` to get a quick briefing before a meeting. The command collects emails, tasks, notes and Slack messages around the event time and summarizes them with your LLM of choice. By default it looks at the next calendar entry, but you can target a specific moment with the `--event` option.
 
 ```bash
 vea prepare-event --lookahead-minutes 30 --slack-dm
 ```
 
 Key options include:
-- `--event` – Event start time like `2025-05-28 14:00`
+- `--event` – Moment to prepare for. Use a start time like `2025-05-28 14:00`, `now` for the current meeting, or `next` for the next one
 - `--lookahead-minutes` – How far ahead to search for the next event
 - `--journal-dir` – Directory with Markdown journal files
 - `--journal-days` – Number of past journal days to include (default: 21)
