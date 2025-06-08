@@ -78,3 +78,42 @@ def find_upcoming_events(
         return [e for e, dt_val in zip(eligible, start_times) if dt_val == earliest]
         
     return []
+
+
+def find_current_events(
+    *,
+    my_email: Optional[str],
+    blacklist: Optional[List[str]],
+) -> List[dict]:
+    """Return events that are happening right now."""
+
+    tz = ZoneInfo(os.getenv("TIMEZONE", "Europe/Amsterdam"))
+    now = datetime.now(tz)
+    events = gcal.load_events(
+        now.date(),
+        my_email=my_email,
+        blacklist=blacklist,
+        skip_past_events=False,
+    )
+
+    timed = [e for e in events if "T" in e.get("start", "")]
+
+    def _dt(ev: dict, field: str) -> datetime:
+        dt_val = datetime.fromisoformat(ev[field])
+        if dt_val.tzinfo is None:
+            dt_val = dt_val.replace(tzinfo=tz)
+        return dt_val
+
+    def _matches_blacklist(ev: dict) -> bool:
+        if not blacklist:
+            return False
+        summary = ev.get("summary", "").lower()
+        return any(bl.lower() in summary for bl in blacklist)
+
+    return [
+        e
+        for e in timed
+        if _dt(e, "start") <= now <= _dt(e, "end")
+        and (e.get("summary") or "").strip()
+        and not _matches_blacklist(e)
+    ]

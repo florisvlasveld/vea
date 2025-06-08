@@ -7,7 +7,11 @@ from zoneinfo import ZoneInfo
 import typer
 
 from ..loaders import gcal, gmail, journals, extras, todoist, slack as slack_loader
-from ..utils.event_utils import parse_event_dt, find_upcoming_events
+from ..utils.event_utils import (
+    parse_event_dt,
+    find_upcoming_events,
+    find_current_events,
+)
 from ..utils.output_utils import resolve_output_path
 from ..utils.error_utils import enable_debug_logging, handle_exception
 from ..utils.summarization import summarize_event_preparation
@@ -22,7 +26,10 @@ app = typer.Typer()
 def prepare_event(
     event: Optional[str] = typer.Option(
         None,
-        help="Event start time to prepare for (YYYY-MM-DD HH:MM). If omitted, use the next upcoming event.",
+        help=(
+            "When to prepare for: a start time like '2025-05-28 14:00', "
+            "'now' for the current meeting, or 'next' for the next one"
+        ),
     ),
     lookahead_minutes: Optional[int] = typer.Option(None, help="Number of minutes to look ahead for upcoming events"),
     journal_dir: Optional[Path] = typer.Option(None, help="Directory with Markdown journal files"),
@@ -65,14 +72,29 @@ def prepare_event(
     try:
         tz = ZoneInfo(os.getenv("TIMEZONE", "Europe/Amsterdam"))
         now = datetime.now(tz)
+
         if event:
-            start_dt = parse_event_dt(event)
-            events = find_upcoming_events(
-                start=start_dt,
-                my_email=my_email,
-                blacklist=calendar_blacklist,
-                lookahead_minutes=lookahead_minutes,
-            )
+            key = event.strip().lower()
+            if key == "next":
+                events = find_upcoming_events(
+                    start=now,
+                    my_email=my_email,
+                    blacklist=calendar_blacklist,
+                    lookahead_minutes=lookahead_minutes,
+                )
+            elif key == "now":
+                events = find_current_events(
+                    my_email=my_email,
+                    blacklist=calendar_blacklist,
+                )
+            else:
+                start_dt = parse_event_dt(event)
+                events = find_upcoming_events(
+                    start=start_dt,
+                    my_email=my_email,
+                    blacklist=calendar_blacklist,
+                    lookahead_minutes=lookahead_minutes,
+                )
         else:
             events = find_upcoming_events(
                 start=now,

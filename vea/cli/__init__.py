@@ -4,7 +4,7 @@ from dotenv import load_dotenv, find_dotenv
 from ..loaders import gcal, gmail, journals, extras, todoist, slack as slack_loader
 
 from . import auth, daily, weekly, prepare_event, check_for_tasks
-from .utils import _find_upcoming_events
+from .utils import _find_upcoming_events, _find_current_events
 
 app = typer.Typer(help="Vea: Generate a personalized daily briefing or weekly summary.")
 
@@ -33,4 +33,5 @@ __all__ = [
     "todoist",
     "slack_loader",
     "_find_upcoming_events",
+    "_find_current_events",
 ]
