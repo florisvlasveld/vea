@@ -56,6 +56,7 @@ pip install -e .
 ## Daily briefing
 
 ⚠️ Note: Depending on how much data is being processed (calendar events, emails, tasks, notes, Slack messages), generating your daily brief may take several minutes or even significantly longer to complete. Some models may not be able to handle the amount of input data.
+To keep prompts concise, Vea ranks the loaded context by relevance and only sends the top entries to the LLM. Use `--full-context` in any command to disable this filtering step.
 
 ```bash
 vea daily \
@@ -89,6 +90,7 @@ Below is a complete list of options for `vea daily` (run `vea daily --help` to s
 - `--prompt-file` – Path to a custom prompt file (default: `/prompts/daily-default.prompt`)
 - `--model` – LLM to use for summarization (e.g. `o4-mini`, `claude-3-7-sonnet-latest`, `gemini-2.5-pro-preview-05-06`)
 - `--skip-path-checks` – Skip validation of input/output paths
+- `--full-context` – Disable context filtering and use all loaded data
 - `--debug` – Enable debug logging
 - `--quiet` – Suppress printing the summary to stdout
 
@@ -116,6 +118,7 @@ Run `vea weekly --help` to see all options. Key options include:
 - `--save-pdf` – Save the summary as a PDF
 - `--save-path` – Custom output directory or file path
 - `--prompt-file` – Path to a custom prompt file (default: `/prompts/weekly-default.prompt`)
+- `--full-context` – Disable context filtering and use all loaded data
 
 ### Prepare for an event
 
@@ -132,6 +135,7 @@ Key options include:
 - `--journal-days` – Number of past journal days to include (default: 21)
 - `--slack-days` – Number of past days of Slack messages to load (default: 5)
 - `--slack-dm` – Send the output as a Slack DM to yourself
+- `--full-context` – Disable context filtering and use all loaded data
 
 ### Check for forgotten tasks
 

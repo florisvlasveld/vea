@@ -1,20 +1,23 @@
 import os
+import logging
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 import typer
 
-from ..loaders import gcal, journals, extras
+from ..loaders import extras
 from ..loaders.journals import load_journals
 from ..loaders.extras import load_extras
 from ..utils.date_utils import parse_week_input
 from ..utils.output_utils import resolve_output_path
 from ..utils.error_utils import enable_debug_logging, handle_exception
 from ..utils.summarization import summarize_weekly
+from ..utils.context_filter import filter_top_n
 from ..utils.pdf_utils import convert_markdown_to_pdf
 from ..utils.generic_utils import check_required_directories
 
+logger = logging.getLogger(__name__)
 app = typer.Typer()
 
 
@@ -35,6 +38,7 @@ def generate_weekly_summary(
         "gemini-2.5-pro-preview-06-05", help="Model to use for summarization (OpenAI, Google Gemini, or Anthropic)"
     ),
     skip_path_checks: bool = typer.Option(False, help="Skip path existence checks."),
+    full_context: bool = typer.Option(False, help="Disable context filtering and send all data to the LLM"),
     debug: bool = typer.Option(False, help="Enable debug logging"),
     quiet: bool = typer.Option(False, help="Suppress output to stdout"),
 ):
@@ -69,6 +73,22 @@ def generate_weekly_summary(
         journals_contextual = [e for e in all_journals if not journal_in_week(e)]
         extras_data = all_extras
         bio = os.getenv("BIO", "")
+
+        if not full_context:
+            logger.debug("Filtering context for LLM input...")
+            before = len(journals_in_week)
+            journals_in_week = filter_top_n(journals_in_week, str(week_start), 10)
+            logger.debug("journals_in_week reduced from %d to %d", before, len(journals_in_week))
+
+            before = len(journals_contextual)
+            journals_contextual = filter_top_n(journals_contextual, str(week_start), 10)
+            logger.debug(
+                "journals_contextual reduced from %d to %d", before, len(journals_contextual)
+            )
+
+            before = len(extras_data)
+            extras_data = filter_top_n(extras_data, str(week_start), 10)
+            logger.debug("extras reduced from %d to %d", before, len(extras_data))
 
         summary = summarize_weekly(
             model=model,

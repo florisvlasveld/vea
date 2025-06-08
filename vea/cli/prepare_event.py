@@ -1,4 +1,5 @@
 import os
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
@@ -6,7 +7,7 @@ from zoneinfo import ZoneInfo
 
 import typer
 
-from ..loaders import gcal, gmail, journals, extras, todoist, slack as slack_loader
+from ..loaders import gmail, journals, extras, todoist, slack as slack_loader
 from ..utils.event_utils import (
     parse_event_dt,
     find_upcoming_events,
@@ -15,10 +16,12 @@ from ..utils.event_utils import (
 from ..utils.output_utils import resolve_output_path
 from ..utils.error_utils import enable_debug_logging, handle_exception
 from ..utils.summarization import summarize_event_preparation
+from ..utils.context_filter import filter_top_n
 from ..utils.slack_utils import send_slack_dm
 from ..utils.pdf_utils import convert_markdown_to_pdf
 from ..utils.generic_utils import check_required_directories
 
+logger = logging.getLogger(__name__)
 app = typer.Typer()
 
 
@@ -54,6 +57,7 @@ def prepare_event(
     prompt_file: Optional[Path] = typer.Option(None, help="Path to custom prompt file"),
     model: str = typer.Option("gemini-2.5-pro-preview-06-05", help="Model to use for summarization"),
     skip_path_checks: bool = typer.Option(False, help="Skip checks for existence of input and output paths"),
+    full_context: bool = typer.Option(False, help="Disable context filtering and send all data to the LLM"),
     debug: bool = typer.Option(False, help="Enable debug logging"),
     quiet: bool = typer.Option(False, help="Suppress output to stdout"),
 ) -> None:
@@ -129,6 +133,31 @@ def prepare_event(
             else {}
         )
         bio = os.getenv("BIO", "")
+
+        if not full_context:
+            event_date = first_dt.date()
+            logger.debug("Filtering context for LLM input...")
+            before = len(journals_data)
+            journals_data = filter_top_n(journals_data, str(event_date), 10)
+            logger.debug("Journals reduced from %d to %d", before, len(journals_data))
+
+            before = len(extras_data)
+            extras_data = filter_top_n(extras_data, str(event_date), 10)
+            logger.debug("Extras reduced from %d to %d", before, len(extras_data))
+
+            before = len(tasks)
+            tasks = filter_top_n(tasks, str(event_date), 10, key="content")
+            logger.debug("Tasks reduced from %d to %d", before, len(tasks))
+
+            for key_name, msgs in emails.items():
+                before = len(msgs)
+                emails[key_name] = filter_top_n(msgs, str(event_date), 5, key="body")
+                logger.debug("Emails[%s] reduced from %d to %d", key_name, before, len(emails[key_name]))
+
+            for channel, msgs in list(slack_data.items()):
+                before = len(msgs)
+                slack_data[channel] = filter_top_n(msgs, str(event_date), 5, key="text")
+                logger.debug("Slack '%s' messages reduced from %d to %d", channel, before, len(slack_data[channel]))
 
         summary = summarize_event_preparation(
             model=model,
