@@ -1,11 +1,13 @@
 import os
+import logging
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
 
 import typer
 
-from ..loaders import gcal, journals, extras
+from ..loaders import journals, extras
 from ..loaders.journals import load_journals
 from ..loaders.extras import load_extras
 from ..utils.date_utils import parse_week_input
@@ -14,6 +16,12 @@ from ..utils.error_utils import enable_debug_logging, handle_exception
 from ..utils.summarization import summarize_weekly
 from ..utils.pdf_utils import convert_markdown_to_pdf
 from ..utils.generic_utils import check_required_directories
+from ..utils.text_utils import estimate_tokens, summarize_text
+
+
+logger = logging.getLogger(__name__)
+
+_TOKEN_RE = re.compile(r"\b\w+\b")
 
 app = typer.Typer()
 
@@ -34,6 +42,8 @@ def generate_weekly_summary(
     model: str = typer.Option(
         "gemini-2.5-pro-preview-06-05", help="Model to use for summarization (OpenAI, Google Gemini, or Anthropic)"
     ),
+    token_budget: int = typer.Option(10000, help="Token budget for summarized context"),
+    full_context: bool = typer.Option(False, help="Skip compression and use all context"),
     skip_path_checks: bool = typer.Option(False, help="Skip path existence checks."),
     debug: bool = typer.Option(False, help="Enable debug logging"),
     quiet: bool = typer.Option(False, help="Suppress output to stdout"),
@@ -62,12 +72,81 @@ def generate_weekly_summary(
             latest_date=week_end,
         )
 
+        def _score_entry(entry: dict) -> float:
+            content = entry.get("content", "")
+            tokens = _TOKEN_RE.findall(content.lower())
+            if not tokens:
+                return 0.0
+            unique_words = len(set(tokens))
+            density = unique_words / len(tokens)
+
+            alias_bonus = 0.0
+            for alias in alias_map.keys():
+                if alias.lower() in content.lower():
+                    alias_bonus = 100.0
+                    break
+
+            recency = 0.0
+            if "date" in entry and entry["date"]:
+                recency = max(0, 7 - (week_end - entry["date"]).days) * 10.0
+
+            return len(tokens) * density + alias_bonus + recency
+
+        def _compress_group(name: str, entries: List[dict], remaining: int) -> tuple[List[dict], int]:
+            if not entries or remaining <= 0:
+                logger.warning("No budget left for %s", name)
+                return [], 0
+
+            ranked = sorted(entries, key=_score_entry, reverse=True)
+            out: List[dict] = []
+            used = 0
+            for entry in ranked:
+                summary = summarize_text(entry["content"])
+                tokens = estimate_tokens(summary)
+                entry_id = entry.get("filename") or entry.get("id")
+                logger.debug("%s candidate %s tokens=%d", name, entry_id, tokens)
+                if used + tokens > remaining:
+                    logger.debug(
+                        "%s excluded %s due to budget (needed %d remaining %d)",
+                        name,
+                        entry_id,
+                        tokens,
+                        remaining - used,
+                    )
+                    continue
+                new_e = entry.copy()
+                new_e["content"] = summary
+                new_e["token_count"] = tokens
+                out.append(new_e)
+                used += tokens
+            logger.debug(
+                "%s before=%d after=%d tokens=%d",
+                name,
+                len(entries),
+                len(out),
+                used,
+            )
+            return out, used
+
         def journal_in_week(entry: dict) -> bool:
             return "date" in entry and week_start <= entry["date"] <= week_end
 
         journals_in_week = [e for e in all_journals if journal_in_week(e)]
         journals_contextual = [e for e in all_journals if not journal_in_week(e)]
         extras_data = all_extras
+
+        if full_context:
+            logger.debug("Full context enabled; skipping compression")
+        else:
+            remaining = token_budget
+            journals_in_week, used = _compress_group("week_journals", journals_in_week, remaining)
+            remaining -= used
+            journals_contextual, used = _compress_group("context_journals", journals_contextual, remaining)
+            remaining -= used
+            extras_data, used = _compress_group("extras", extras_data, remaining)
+            remaining -= used
+            logger.debug("Total tokens used %d of %d", token_budget - remaining, token_budget)
+
         bio = os.getenv("BIO", "")
 
         summary = summarize_weekly(
