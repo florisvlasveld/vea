@@ -52,7 +52,14 @@ def test_daily_generate_global_budget(monkeypatch):
     # Patch loader functions to return sample data
     monkeypatch.setattr(daily.extras, "load_extras", lambda paths: [{"filename": "ex1", "content": "alpha note", "aliases": ["Alpha"]}])
     monkeypatch.setattr(daily.extras, "build_alias_map", lambda extras: {"alpha": "ex1"})
-    monkeypatch.setattr(daily.journals, "load_journals", lambda *a, **k: [{"filename": "j1", "content": "alpha journal", "date": datetime(2025,4,30).date()}])
+    monkeypatch.setattr(
+        daily.journals,
+        "load_journals",
+        lambda *a, **k: [
+            {"filename": "j1", "content": "alpha journal", "date": datetime(2025,4,30).date(), "sub_index": 1},
+            {"filename": "j1", "content": "beta journal", "date": datetime(2025,4,30).date(), "sub_index": 2},
+        ],
+    )
     monkeypatch.setattr(daily.gcal, "load_events", lambda *a, **k: [{"summary": "Alpha Meeting", "description": "discuss", "attendees": [{"name": "Alice", "email": "alice@example.com"}]}])
     monkeypatch.setattr(daily.todoist, "load_tasks", lambda *a, **k: [{"content": "Finish alpha", "description": ""}])
     monkeypatch.setattr(daily.gmail, "load_emails", lambda *a, **k: {"inbox": [{"subject": "hello", "from": "alice", "date": "", "body": "alpha"}]})
@@ -96,7 +103,14 @@ def test_daily_generate_global_budget(monkeypatch):
 def test_daily_generate_group_budget(monkeypatch):
     monkeypatch.setattr(daily.extras, "load_extras", lambda paths: [{"filename": "ex1", "content": "alpha note", "aliases": ["Alpha"]}])
     monkeypatch.setattr(daily.extras, "build_alias_map", lambda extras: {"alpha": "ex1"})
-    monkeypatch.setattr(daily.journals, "load_journals", lambda *a, **k: [{"filename": "j1", "content": "alpha journal", "date": datetime(2025,4,30).date()}])
+    monkeypatch.setattr(
+        daily.journals,
+        "load_journals",
+        lambda *a, **k: [
+            {"filename": "j1", "content": "alpha journal", "date": datetime(2025,4,30).date(), "sub_index": 1},
+            {"filename": "j1", "content": "beta journal", "date": datetime(2025,4,30).date(), "sub_index": 2},
+        ],
+    )
     monkeypatch.setattr(daily.gcal, "load_events", lambda *a, **k: [{"summary": "Alpha Meeting"}])
     monkeypatch.setattr(daily.todoist, "load_tasks", lambda *a, **k: [])
     monkeypatch.setattr(daily.gmail, "load_emails", lambda *a, **k: {"inbox": [{"subject": "hello", "body": "alpha"}]})

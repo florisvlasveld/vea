@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Dict, Optional
 
+from ..utils.markdown_utils import split_outliner_blocks
+
 logger = logging.getLogger(__name__)
 
 MAX_SIZE = 100_000  # bytes
@@ -20,12 +22,16 @@ def resolve_references(content: str, alias_map: Dict[str, str]) -> str:
     return re.sub(r"\[\[([^\\]]+)\]\]", replace_match, content)
 
 
+
+
 def load_journals(
     journal_dir: Path,
     journal_days: int = 21,
     alias_map: Optional[Dict[str, str]] = None,
     target_date: Optional[datetime.date] = None,
     latest_date: Optional[datetime.date] = None,
+    *,
+    outliner_mode: bool = True,
 ) -> List[Dict[str, str]]:
     """
     Load journal entries (Markdown files) within the past journal_days. If target_date is provided,
@@ -38,6 +44,7 @@ def load_journals(
     today = datetime.today().date()
     cutoff_date = today - timedelta(days=journal_days)
     entries = []
+    file_count = 0
 
     for path in sorted(journal_dir.glob("*.md")):
         try:
@@ -66,18 +73,30 @@ def load_journals(
                 if alias_map:
                     content = resolve_references(content, alias_map)
 
-                entries.append({
-                    "filename": path.stem,
-                    "content": content,
-                    "date": file_date
-                })
+                file_count += 1
+                if outliner_mode:
+                    bullets = split_outliner_blocks(content)
+                    for i, block in enumerate(bullets, 1):
+                        entries.append(
+                            {
+                                "filename": path.stem,
+                                "content": block,
+                                "date": file_date,
+                                "sub_index": i,
+                            }
+                        )
+                else:
+                    entries.append(
+                        {"filename": path.stem, "content": content, "date": file_date}
+                    )
         except Exception as e:
             logger.warning(f"Skipping file {path} due to error: {e}", exc_info=e)
             continue
 
     logger.debug(
-        "Included %d journal files from the past %d days.",
+        "Included %d journal sub-documents from %d files over the past %d days.",
         len(entries),
+        file_count,
         journal_days,
     )
     return entries

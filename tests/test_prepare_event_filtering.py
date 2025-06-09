@@ -50,7 +50,14 @@ import vea.cli.prepare_event as pe
 def test_prepare_event_filters(monkeypatch):
     monkeypatch.setattr(pe.extras, "load_extras", lambda paths: [{"filename": "ex1", "content": "alpha note", "aliases": ["Alpha"]}])
     monkeypatch.setattr(pe.extras, "build_alias_map", lambda extras: {"alpha": "ex1"})
-    monkeypatch.setattr(pe.journals, "load_journals", lambda *a, **k: [{"filename": "j1", "content": "alpha journal", "date": datetime(2025,4,30).date()}])
+    monkeypatch.setattr(
+        pe.journals,
+        "load_journals",
+        lambda *a, **k: [
+            {"filename": "j1", "content": "alpha journal", "date": datetime(2025,4,30).date(), "sub_index": 1},
+            {"filename": "j1", "content": "beta journal", "date": datetime(2025,4,30).date(), "sub_index": 2},
+        ],
+    )
     monkeypatch.setattr(
         pe, "find_upcoming_events", lambda *a, **k: [{"summary": "Alpha Meeting", "description": "discuss", "attendees": [{"name": "Alice", "email": "alice@example.com"}], "start": "2025-05-01T10:00:00"}]
     )

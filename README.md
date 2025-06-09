@@ -68,6 +68,10 @@ vea daily \
   --save-markdown
 ```
 
+Journal entries are split into top-level bullets for filtering so only the most
+relevant sections are included. Use `--no-outliner-mode` to treat each file as a
+single document.
+
 ### Daily command options
 
 Below is a complete list of options for `vea daily` (run `vea daily --help` to see this at any time):
@@ -75,6 +79,7 @@ Below is a complete list of options for `vea daily` (run `vea daily --help` to s
 - `--date` – Date to generate the brief for (defaults to today)
 - `--journal-dir` – Directory with Markdown journal files (named like `YYYY-MM-DD.md`)
 - `--journal-days` – Number of past journal days to include (default: 21)
+- `--outliner-mode / --no-outliner-mode` – Enable or disable outliner-style parsing for journal entries (default: enabled)
 - `--extras-dir` – Directory with extra `.md` files (e.g. notes, projects)
 - `--gmail-labels` – Additional Gmail labels to include besides `inbox` and `sent` mail
 - `--todoist-project` – Filter tasks by Todoist project
@@ -125,7 +130,7 @@ Run `vea weekly --help` to see all options. Key options include:
 
 ### Prepare for an event
 
-Use `vea prepare-event` to get a quick briefing before a meeting. The command collects emails, tasks, notes and Slack messages around the event time and summarizes them with your LLM of choice. By default it looks at the next calendar entry, but you can target a specific moment with the `--event` option.
+Use `vea prepare-event` to get a quick briefing before a meeting. The command collects emails, tasks, notes and Slack messages around the event time and summarizes them with your LLM of choice. By default it looks at the next calendar entry, but you can target a specific moment with the `--event` option. Journal entries are split into bullet blocks (outliner mode) so only relevant snippets are included.
 
 ```bash
 vea prepare-event --lookahead-minutes 30 --slack-dm
@@ -136,6 +141,7 @@ Key options include:
 - `--lookahead-minutes` – How far ahead to search for the next event
 - `--journal-dir` – Directory with Markdown journal files
 - `--journal-days` – Number of past journal days to include (default: 21)
+- `--outliner-mode / --no-outliner-mode` – Enable or disable outliner-style parsing for journal entries (default: enabled)
 - `--slack-days` – Number of past days of Slack messages to load (default: 5)
 - `--slack-dm` – Send the output as a Slack DM to yourself
 - `--token-budget` – Maximum tokens for filtering documents (default: 10000)
