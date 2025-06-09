@@ -32,6 +32,11 @@ def generate(
     ),
     journal_dir: Optional[Path] = typer.Option(None, help="Directory with Markdown journal files"),
     journal_days: int = typer.Option(21, help="Number of past days of journals to include"),
+    outliner_mode: bool = typer.Option(
+        True,
+        "--outliner-mode/--no-outliner-mode",
+        help="Treat each top-level bullet as a separate journal entry",
+    ),
     extras_dir: Optional[Path] = typer.Option(None, help="Directory with additional Markdown files"),
     gmail_labels: Optional[List[str]] = typer.Option(None, help="List of additional Gmail labels to fetch emails from"),
     todoist_project: Optional[str] = typer.Option(None, help="Name of the Todoist project to filter tasks by"),
@@ -90,10 +95,17 @@ def generate(
                 journal_days=journal_days,
                 alias_map=alias_map,
                 target_date=target_date,
+                outliner_mode=outliner_mode,
             )
             if journal_dir
             else []
         )
+        if debug and outliner_mode:
+            from collections import Counter
+
+            counts = Counter(j["filename"] for j in journals_data)
+            for fn, cnt in counts.items():
+                logger.debug("%s sub-documents extracted from %s", cnt, fn)
         calendars = gcal.load_events(
             target_date,
             my_email=my_email,
@@ -158,13 +170,26 @@ def generate(
                     d.get("combined_score", 0.0),
                     d["token_count"],
                 )
+            kept_ids = {d["id"] for d in result["documents"]}
+            excluded = [d["id"] for d in docs if d["id"] not in kept_ids]
+            for ex in excluded:
+                logger.debug("%s excluded %s", name, ex)
             if not result["documents"]:
                 logger.warning("No %s documents retained after filtering", name)
             return result["documents"]
 
         # --- Build document dictionaries and filter ---
         journal_docs = [
-            {"id": j["filename"], "type": "journal", "content": j["content"], "metadata": {"date": str(j.get("date"))}, "original": j}
+            {
+                "id": f"{j['filename']}#{j.get('sub_index', 1)}",
+                "type": "journal",
+                "content": j["content"],
+                "metadata": {
+                    "date": str(j.get("date")),
+                    "journal_file": f"{j['filename']}.md",
+                },
+                "original": j,
+            }
             for j in journals_data
         ]
         extras_docs = [

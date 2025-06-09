@@ -40,6 +40,11 @@ def prepare_event(
     lookahead_minutes: Optional[int] = typer.Option(None, help="Number of minutes to look ahead for upcoming events"),
     journal_dir: Optional[Path] = typer.Option(None, help="Directory with Markdown journal files"),
     journal_days: int = typer.Option(5, help="Number of past days of journals to include"),
+    outliner_mode: bool = typer.Option(
+        True,
+        "--outliner-mode/--no-outliner-mode",
+        help="Treat each top-level bullet as a separate journal entry",
+    ),
     extras_dir: Optional[Path] = typer.Option(None, help="Directory with additional Markdown files"),
     gmail_labels: Optional[List[str]] = typer.Option(None, help="List of additional Gmail labels to fetch emails from"),
     todoist_project: Optional[str] = typer.Option(None, help="Name of the Todoist project to filter tasks by"),
@@ -124,10 +129,17 @@ def prepare_event(
                 journal_dir,
                 journal_days=journal_days,
                 alias_map=alias_map,
+                outliner_mode=outliner_mode,
             )
             if journal_dir
             else []
         )
+        if debug and outliner_mode:
+            from collections import Counter
+
+            counts = Counter(j["filename"] for j in journals_data)
+            for fn, cnt in counts.items():
+                logger.debug("%s sub-documents extracted from %s", cnt, fn)
         emails = gmail.load_emails(now.date(), gmail_labels=gmail_labels)
         first_dt = datetime.fromisoformat(events[0]["start"])
         if first_dt.tzinfo is None:
@@ -189,12 +201,25 @@ def prepare_event(
                     d.get("combined_score", 0.0),
                     d["token_count"],
                 )
+            kept_ids = {d["id"] for d in result["documents"]}
+            excluded = [d["id"] for d in docs if d["id"] not in kept_ids]
+            for ex in excluded:
+                logger.debug("%s excluded %s", name, ex)
             if not result["documents"]:
                 logger.warning("No %s documents retained after filtering", name)
             return [d["original"] for d in result["documents"]]
 
         journal_docs = [
-            {"id": j["filename"], "type": "journal", "content": j["content"], "metadata": {"date": str(j.get("date"))}, "original": j}
+            {
+                "id": f"{j['filename']}#{j.get('sub_index', 1)}",
+                "type": "journal",
+                "content": j["content"],
+                "metadata": {
+                    "date": str(j.get("date")),
+                    "journal_file": f"{j['filename']}.md",
+                },
+                "original": j,
+            }
             for j in journals_data
         ]
         extras_docs = [
