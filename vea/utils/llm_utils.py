@@ -12,6 +12,23 @@ from .output_utils import truncate_prompt
 logger = logging.getLogger(__name__)
 
 
+def is_completion_model(model: str) -> bool:
+    """Return True if ``model`` uses the OpenAI completions endpoint."""
+
+    completion_prefixes = (
+        "o1-",
+        "o2-",
+        "o3-",
+        "o4-",
+        "text-",
+        "babbage-",
+        "curie-",
+        "ada-",
+        "davinci-",
+    )
+    return any(model.startswith(p) for p in completion_prefixes) or "-instruct" in model
+
+
 def run_llm_prompt(prompt: str, model: Optional[str] = None, *, quiet: bool = False) -> str:
 
     if quiet:
@@ -61,6 +78,20 @@ def run_llm_prompt(prompt: str, model: Optional[str] = None, *, quiet: bool = Fa
             client = openai.OpenAI()
             restrictive_models = ("o", "gpt-4o")
             is_restrictive = model.startswith(restrictive_models)
+
+            # Determine whether to use the chat or completion endpoint
+            is_completion = is_completion_model(model)
+
+            if is_completion:
+                kwargs = {
+                    "model": model,
+                    "prompt": prompt,
+                }
+                if not is_restrictive:
+                    kwargs["temperature"] = 0.3
+                    kwargs["max_tokens"] = 16384
+                response = client.completions.create(**kwargs)
+                return response.choices[0].text.strip()
 
             kwargs = {
                 "model": model,
