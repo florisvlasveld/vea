@@ -13,20 +13,20 @@ logger = logging.getLogger(__name__)
 
 
 def is_completion_model(model: str) -> bool:
-    """Return True if ``model`` uses the OpenAI completions endpoint."""
+    """Return True if ``model`` should use the OpenAI completions endpoint."""
 
     completion_prefixes = (
-        "o1-",
-        "o2-",
-        "o3-",
-        "o4-",
         "text-",
         "babbage-",
         "curie-",
         "ada-",
         "davinci-",
     )
-    return any(model.startswith(p) for p in completion_prefixes) or "-instruct" in model
+
+    if model.startswith(completion_prefixes):
+        return True
+
+    return "-instruct" in model
 
 
 def run_llm_prompt(prompt: str, model: Optional[str] = None, *, quiet: bool = False) -> str:

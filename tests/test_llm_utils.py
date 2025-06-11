@@ -45,16 +45,25 @@ def test_chat_model_uses_chat_endpoint(monkeypatch):
     assert "messages" in log[0][1]
 
 
-def test_completion_model_uses_completion_endpoint(monkeypatch):
+def test_o3_model_uses_chat_endpoint(monkeypatch):
     log = []
     _setup_openai_stub(monkeypatch, log)
     result = llm_utils.run_llm_prompt("hi", model="o3-pro-2025-06-10", quiet=True)
+    assert result == "chat"
+    assert log and log[0][0] == "chat"
+    assert "messages" in log[0][1]
+
+
+def test_completion_model_uses_completion_endpoint(monkeypatch):
+    log = []
+    _setup_openai_stub(monkeypatch, log)
+    result = llm_utils.run_llm_prompt("hi", model="text-davinci-003", quiet=True)
     assert result == "completion"
     assert log and log[0][0] == "completion"
     assert "prompt" in log[0][1]
 
 
 def test_is_completion_model():
-    assert llm_utils.is_completion_model("o3-pro-2025-06-10")
+    assert not llm_utils.is_completion_model("o3-pro-2025-06-10")
     assert llm_utils.is_completion_model("text-davinci-003")
     assert not llm_utils.is_completion_model("gpt-4")
