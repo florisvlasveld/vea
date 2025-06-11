@@ -17,6 +17,12 @@ def is_responses_model(model: str) -> bool:
     responses_only_models = {"o3-pro-2025-06-10"}
     return model in responses_only_models
 
+
+def is_restrictive_model(model: str) -> bool:
+    """Return True if the given OpenAI model has restrictive parameters."""
+    restrictive_models = ("o", "gpt-4o")
+    return model.startswith(restrictive_models)
+
 def run_llm_prompt(prompt: str, model: Optional[str] = None, *, quiet: bool = False) -> str:
 
     if quiet:
@@ -63,8 +69,7 @@ def run_llm_prompt(prompt: str, model: Optional[str] = None, *, quiet: bool = Fa
 
     else:
         client = openai.OpenAI()
-        restrictive_models = ("o", "gpt-4o")
-        is_restrictive = model.startswith(restrictive_models)
+        is_restrictive = is_restrictive_model(model)
         use_responses = is_responses_model(model)
 
         try:
