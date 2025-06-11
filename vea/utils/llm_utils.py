@@ -75,7 +75,7 @@ def run_llm_prompt(prompt: str, model: Optional[str] = None, *, quiet: bool = Fa
                     kwargs["temperature"] = 0.3
                     kwargs["max_tokens"] = 16384
                 response = client.responses.create(**kwargs)
-                return response.response.strip()
+                return response.output_text.strip()
 
             kwargs = {
                 "model": model,
