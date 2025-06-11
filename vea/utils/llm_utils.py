@@ -12,6 +12,11 @@ from .output_utils import truncate_prompt
 logger = logging.getLogger(__name__)
 
 
+def is_responses_model(model: str) -> bool:
+    """Return True if the given OpenAI model only supports the Responses API."""
+    responses_only_models = {"o3-pro-2025-06-10"}
+    return model in responses_only_models
+
 def run_llm_prompt(prompt: str, model: Optional[str] = None, *, quiet: bool = False) -> str:
 
     if quiet:
@@ -57,10 +62,20 @@ def run_llm_prompt(prompt: str, model: Optional[str] = None, *, quiet: bool = Fa
         raise RuntimeError("Failed to get a response from Claude after multiple attempts.")
 
     else:
+        client = openai.OpenAI()
+        restrictive_models = ("o", "gpt-4o")
+        is_restrictive = model.startswith(restrictive_models)
+        use_responses = is_responses_model(model)
+
         try:
-            client = openai.OpenAI()
-            restrictive_models = ("o", "gpt-4o")
-            is_restrictive = model.startswith(restrictive_models)
+            if use_responses:
+                logger.debug("Using Responses API for model: %s", model)
+                kwargs = {"model": model, "prompt": prompt}
+                if not is_restrictive:
+                    kwargs["temperature"] = 0.3
+                    kwargs["max_tokens"] = 16384
+                response = client.responses.create(**kwargs)
+                return response.response.strip()
 
             kwargs = {
                 "model": model,
@@ -75,5 +90,12 @@ def run_llm_prompt(prompt: str, model: Optional[str] = None, *, quiet: bool = Fa
             return response.choices[0].message.content.strip()
 
         except Exception as e:
-            logger.error("OpenAI request failed: %s", e)
+            api_type = "Responses" if use_responses else "Chat"
+            logger.debug(
+                "OpenAI request failed using %s API for model %s: %s",
+                api_type,
+                model,
+                e,
+            )
             raise
+
