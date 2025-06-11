@@ -12,6 +12,23 @@ from .output_utils import truncate_prompt
 logger = logging.getLogger(__name__)
 
 
+def is_chat_model(model: str) -> bool:
+    """Return True if the OpenAI model should use the chat endpoint."""
+    if not model:
+        return True
+
+    m = model.lower()
+
+    # Fine-tuned chat models start with "ft:" followed by the base model name
+    if m.startswith("ft:"):
+        m = m.split(":", 1)[1]
+
+    chat_prefixes = ("gpt-", "o4-")
+    chat_exact = {"gpt-4", "gpt-4o", "gpt-3.5-turbo", "gpt-3.5-turbo-16k"}
+
+    return m.startswith(chat_prefixes) or m in chat_exact
+
+
 def run_llm_prompt(prompt: str, model: Optional[str] = None, *, quiet: bool = False) -> str:
 
     if quiet:
@@ -59,20 +76,35 @@ def run_llm_prompt(prompt: str, model: Optional[str] = None, *, quiet: bool = Fa
     else:
         try:
             client = openai.OpenAI()
+
             restrictive_models = ("o", "gpt-4o")
             is_restrictive = model.startswith(restrictive_models)
 
-            kwargs = {
-                "model": model,
-                "messages": [{"role": "user", "content": prompt}],
-            }
+            if is_chat_model(model):
+                endpoint = "chat"
+                kwargs = {
+                    "model": model,
+                    "messages": [{"role": "user", "content": prompt}],
+                }
+            else:
+                endpoint = "completion"
+                kwargs = {
+                    "model": model,
+                    "prompt": prompt,
+                }
 
             if not is_restrictive:
                 kwargs["temperature"] = 0.3
                 kwargs["max_tokens"] = 16384
 
-            response = client.chat.completions.create(**kwargs)
-            return response.choices[0].message.content.strip()
+            if endpoint == "chat":
+                logger.debug("Using chat completions endpoint")
+                response = client.chat.completions.create(**kwargs)
+                return response.choices[0].message.content.strip()
+            else:
+                logger.debug("Using completions endpoint")
+                response = client.completions.create(**kwargs)
+                return response.choices[0].text.strip()
 
         except Exception as e:
             logger.error("OpenAI request failed: %s", e)
