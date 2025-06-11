@@ -68,6 +68,10 @@ vea daily \
   --save-markdown
 ```
 
+Journal entries are split into top-level bullets for filtering so only the most
+relevant sections are included. Use `--no-outliner-mode` to treat each file as a
+single document.
+
 ### Daily command options
 
 Below is a complete list of options for `vea daily` (run `vea daily --help` to see this at any time):
@@ -75,6 +79,7 @@ Below is a complete list of options for `vea daily` (run `vea daily --help` to s
 - `--date` – Date to generate the brief for (defaults to today)
 - `--journal-dir` – Directory with Markdown journal files (named like `YYYY-MM-DD.md`)
 - `--journal-days` – Number of past journal days to include (default: 21)
+- `--outliner-mode / --no-outliner-mode` – Enable or disable outliner-style parsing for journal entries (default: enabled)
 - `--extras-dir` – Directory with extra `.md` files (e.g. notes, projects)
 - `--gmail-labels` – Additional Gmail labels to include besides `inbox` and `sent` mail
 - `--todoist-project` – Filter tasks by Todoist project
@@ -88,6 +93,10 @@ Below is a complete list of options for `vea daily` (run `vea daily --help` to s
 - `--save-path` – Custom file path or directory for the output
 - `--prompt-file` – Path to a custom prompt file (default: `/prompts/daily-default.prompt`)
 - `--model` – LLM to use for summarization (e.g. `o4-mini`, `claude-3-7-sonnet-latest`, `gemini-2.5-pro-preview-05-06`)
+- `--token-budget` – Maximum tokens to include after filtering (default: 10000)
+- `--budget-scope` – `global` to rank all documents together or `group` per source (default: global)
+- `--focus-topics-override` – Custom focus topics for debugging the filter
+- `--full-context` – Skip all filtering and include every loaded document
 - `--skip-path-checks` – Skip validation of input/output paths
 - `--debug` – Enable debug logging
 - `--quiet` – Suppress printing the summary to stdout
@@ -116,10 +125,12 @@ Run `vea weekly --help` to see all options. Key options include:
 - `--save-pdf` – Save the summary as a PDF
 - `--save-path` – Custom output directory or file path
 - `--prompt-file` – Path to a custom prompt file (default: `/prompts/weekly-default.prompt`)
+- `--token-budget` – Maximum tokens for the summarized context (default: 10000)
+- `--full-context` – Skip compression and include every loaded document
 
 ### Prepare for an event
 
-Use `vea prepare-event` to get a quick briefing before a meeting. The command collects emails, tasks, notes and Slack messages around the event time and summarizes them with your LLM of choice. By default it looks at the next calendar entry, but you can target a specific moment with the `--event` option.
+Use `vea prepare-event` to get a quick briefing before a meeting. The command collects emails, tasks, notes and Slack messages around the event time and summarizes them with your LLM of choice. By default it looks at the next calendar entry, but you can target a specific moment with the `--event` option. Journal entries are split into bullet blocks (outliner mode) so only relevant snippets are included.
 
 ```bash
 vea prepare-event --lookahead-minutes 30 --slack-dm
@@ -130,8 +141,12 @@ Key options include:
 - `--lookahead-minutes` – How far ahead to search for the next event
 - `--journal-dir` – Directory with Markdown journal files
 - `--journal-days` – Number of past journal days to include (default: 21)
+- `--outliner-mode / --no-outliner-mode` – Enable or disable outliner-style parsing for journal entries (default: enabled)
 - `--slack-days` – Number of past days of Slack messages to load (default: 5)
 - `--slack-dm` – Send the output as a Slack DM to yourself
+- `--token-budget` – Maximum tokens for filtering documents (default: 10000)
+- `--focus-topics-override` – Override the automatically detected focus topics
+- `--full-context` – Skip filtering and include every loaded document
 
 ### Check for forgotten tasks
 
@@ -142,6 +157,10 @@ vea check-for-tasks --journal-dir ~/Logseq/journals --todoist-lookback-days 10
 ```
 
 This command detects untracked or unfinished to-dos based on your recent activity. Use `--todoist-lookback-days` to set how far back to include completed Todoist tasks (default: 7 days).
+
+Key options include:
+- `--token-budget` – Maximum tokens for filtering documents (default: 10000)
+- `--full-context` – Skip compression and include every loaded document
 
 ### AI Summary Engine
 
