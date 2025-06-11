@@ -88,7 +88,6 @@ Below is a complete list of options for `vea daily` (run `vea daily --help` to s
 - `--save-path` – Custom file path or directory for the output
 - `--prompt-file` – Path to a custom prompt file (default: `/prompts/daily-default.prompt`)
 - `--model` – LLM to use for summarization (e.g. `o4-mini`, `o3-pro-2025-06-10`, `claude-3-7-sonnet-latest`, `gemini-2.5-pro-preview-05-06`)
-- OpenAI's `o3-pro-*` models are supported and use the completions endpoint.
 - `--skip-path-checks` – Skip validation of input/output paths
 - `--debug` – Enable debug logging
 - `--quiet` – Suppress printing the summary to stdout
