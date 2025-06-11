@@ -70,7 +70,7 @@ def run_llm_prompt(prompt: str, model: Optional[str] = None, *, quiet: bool = Fa
         try:
             if use_responses:
                 logger.debug("Using Responses API for model: %s", model)
-                kwargs = {"model": model, "prompt": prompt}
+                kwargs = {"model": model, "input": prompt}
                 if not is_restrictive:
                     kwargs["temperature"] = 0.3
                     kwargs["max_tokens"] = 16384
