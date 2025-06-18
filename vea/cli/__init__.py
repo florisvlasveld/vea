@@ -6,7 +6,7 @@ from ..loaders import gcal, gmail, journals, extras, todoist, slack as slack_loa
 from . import auth, daily, weekly, prepare_event, check_for_tasks
 from .utils import _find_upcoming_events, _find_current_events
 
-app = typer.Typer(help="Vea: Generate a personalized daily briefing or weekly summary.")
+app = typer.Typer(help="Vea: Generate personalized briefings and checklists.")
 
 load_dotenv(find_dotenv(usecwd=True))
 

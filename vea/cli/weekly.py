@@ -32,7 +32,7 @@ def generate_weekly_summary(
     save_path: Optional[Path] = typer.Option(None, help="Optional override path to save output."),
     prompt_file: Optional[Path] = typer.Option(None, help="Path to custom prompt file"),
     model: str = typer.Option(
-        "gemini-2.5-pro-preview-06-05", help="Model to use for summarization (OpenAI, Google Gemini, or Anthropic)"
+        "gemini-2.5-pro", help="Model to use for summarization (OpenAI, Google Gemini, or Anthropic)"
     ),
     skip_path_checks: bool = typer.Option(False, help="Skip path existence checks."),
     debug: bool = typer.Option(False, help="Enable debug logging"),
