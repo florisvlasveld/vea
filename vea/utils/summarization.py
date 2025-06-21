@@ -1,10 +1,16 @@
 import logging
 import json
+import re
 from datetime import date
 from pathlib import Path
 from typing import List, Dict, Optional, Union
 
 from vea.utils.llm_utils import run_llm_prompt
+from vea.utils.embedding_utils import (
+    load_or_create_index,
+    query_index,
+    INDEX_DIR,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +50,21 @@ def render_daily_prompt(
         slack=slack
     )
 
+
+def _split_bullets(text: str) -> List[str]:
+    """Split Markdown text into top-level bullet blocks."""
+    parts: List[str] = []
+    current: List[str] = []
+    for line in text.splitlines():
+        if re.match(r"^[*-]\s+", line):
+            if current:
+                parts.append("\n".join(current).strip())
+                current = []
+        current.append(line)
+    if current:
+        parts.append("\n".join(current).strip())
+    return [p for p in parts if p.strip()]
+
 '''
 prompt = render_daily_prompt(
         prompt_template,
@@ -72,22 +93,91 @@ def summarize_daily(
     quiet: bool = False,
     debug: bool = False,
     prompt_path: Optional[Path] = None,
+    use_embeddings: bool = False,
+    outliner_mode: bool = False,
+    topk_journals: int = 20,
+    topk_extras: int = 20,
+    topk_emails: int = 20,
+    topk_slack: int = 20,
 ) -> str:
 
     prompt_template = load_prompt_template(prompt_path)
-    prompt = render_daily_prompt(
-        prompt_template,
-        date=date,
-        bio=bio,
-        calendars=json.dumps(calendars, indent=2, default=str, ensure_ascii=False),
-        tasks=json.dumps(tasks, indent=2, default=str, ensure_ascii=False),
-        emails=json.dumps(emails, indent=2, default=str, ensure_ascii=False),
-        journals=json.dumps(journals, indent=2, default=str, ensure_ascii=False),
-        extras=json.dumps(extras, indent=2, default=str, ensure_ascii=False),
-        slack=json.dumps(slack, indent=2, default=str, ensure_ascii=False) if slack else ""
-    )
 
+    if use_embeddings:
+        journal_docs: List[str] = []
+        for entry in journals:
+            content = entry.get("content", "")
+            if outliner_mode:
+                journal_docs.extend(_split_bullets(content))
+            else:
+                journal_docs.append(content)
 
+        extras_docs = [e.get("content", "") for e in extras]
+
+        email_docs: List[str] = []
+        for msgs in emails.values():
+            for m in msgs:
+                email_docs.append(f"{m.get('subject','')} {m.get('body','')}")
+
+        slack_docs: List[str] = []
+        if slack:
+            for msgs in slack.values():
+                for m in msgs:
+                    slack_docs.append(m.get("text", ""))
+                    for r in m.get("replies", []):
+                        slack_docs.append(r.get("text", ""))
+
+        journal_index = load_or_create_index(INDEX_DIR / "journals.index", journal_docs, debug=debug)
+        extras_index = load_or_create_index(INDEX_DIR / "extras.index", extras_docs, debug=debug)
+        email_index = load_or_create_index(INDEX_DIR / "emails.index", email_docs, debug=debug)
+        slack_index = load_or_create_index(INDEX_DIR / "slack.index", slack_docs, debug=debug)
+
+        journals_hits: List[str] = []
+        extras_hits: List[str] = []
+        emails_hits: List[str] = []
+        slack_hits: List[str] = []
+
+        def _accumulate(query: str) -> None:
+            journals_hits.extend(query_index(journal_index, query, topk_journals))
+            extras_hits.extend(query_index(extras_index, query, topk_extras))
+            emails_hits.extend(query_index(email_index, query, topk_emails))
+            slack_hits.extend(query_index(slack_index, query, topk_slack))
+
+        for event in calendars:
+            q = " ".join([
+                event.get("summary", ""),
+                event.get("description", ""),
+                " ".join(a.get("email", "") for a in event.get("attendees", [])),
+            ])
+            _accumulate(q)
+
+        for task in tasks:
+            q = f"{task.get('content','')} {task.get('description','')}"
+            _accumulate(q)
+
+        prompt = render_daily_prompt(
+            prompt_template,
+            date=date,
+            bio=bio,
+            calendars=json.dumps(calendars, indent=2, default=str, ensure_ascii=False),
+            tasks=json.dumps(tasks, indent=2, default=str, ensure_ascii=False),
+            emails=json.dumps(list(dict.fromkeys(emails_hits)), indent=2, ensure_ascii=False),
+            journals=json.dumps(list(dict.fromkeys(journals_hits)), indent=2, ensure_ascii=False),
+            extras=json.dumps(list(dict.fromkeys(extras_hits)), indent=2, ensure_ascii=False),
+            slack=json.dumps(list(dict.fromkeys(slack_hits)), indent=2, ensure_ascii=False) if slack else "",
+        )
+    else:
+        prompt = render_daily_prompt(
+            prompt_template,
+            date=date,
+            bio=bio,
+            calendars=json.dumps(calendars, indent=2, default=str, ensure_ascii=False),
+            tasks=json.dumps(tasks, indent=2, default=str, ensure_ascii=False),
+            emails=json.dumps(emails, indent=2, default=str, ensure_ascii=False),
+            journals=json.dumps(journals, indent=2, default=str, ensure_ascii=False),
+            extras=json.dumps(extras, indent=2, default=str, ensure_ascii=False),
+            slack=json.dumps(slack, indent=2, default=str, ensure_ascii=False) if slack else "",
+        )
 
     if debug and not quiet:
         logger.debug("========== BEGIN PROMPT ==========")
@@ -137,19 +227,88 @@ def summarize_event_preparation(
     quiet: bool = False,
     debug: bool = False,
     prompt_path: Optional[Path] = None,
+    use_embeddings: bool = False,
+    outliner_mode: bool = False,
+    topk_journals: int = 20,
+    topk_extras: int = 20,
+    topk_emails: int = 20,
+    topk_slack: int = 20,
 ) -> str:
     """Summarize last-minute insights for upcoming events."""
 
     template = load_prompt_template(prompt_path or APP_PREPARE_EVENT_PROMPT_PATH)
-    prompt = template.format(
-        bio=bio,
-        events=json.dumps(events, indent=2, default=str, ensure_ascii=False),
-        journals=json.dumps(journals, indent=2, default=str, ensure_ascii=False),
-        extras=json.dumps(extras, indent=2, default=str, ensure_ascii=False),
-        emails=json.dumps(emails, indent=2, default=str, ensure_ascii=False),
-        tasks=json.dumps(tasks, indent=2, default=str, ensure_ascii=False),
-        slack=json.dumps(slack, indent=2, default=str, ensure_ascii=False) if slack else "",
-    )
+
+    if use_embeddings:
+        journal_docs: List[str] = []
+        for entry in journals:
+            content = entry.get("content", "")
+            if outliner_mode:
+                journal_docs.extend(_split_bullets(content))
+            else:
+                journal_docs.append(content)
+
+        extras_docs = [e.get("content", "") for e in extras]
+
+        email_docs: List[str] = []
+        for msgs in emails.values():
+            for m in msgs:
+                email_docs.append(f"{m.get('subject','')} {m.get('body','')}")
+
+        slack_docs: List[str] = []
+        if slack:
+            for msgs in slack.values():
+                for m in msgs:
+                    slack_docs.append(m.get("text", ""))
+                    for r in m.get("replies", []):
+                        slack_docs.append(r.get("text", ""))
+
+        journal_index = load_or_create_index(INDEX_DIR / "journals.index", journal_docs, debug=debug)
+        extras_index = load_or_create_index(INDEX_DIR / "extras.index", extras_docs, debug=debug)
+        email_index = load_or_create_index(INDEX_DIR / "emails.index", email_docs, debug=debug)
+        slack_index = load_or_create_index(INDEX_DIR / "slack.index", slack_docs, debug=debug)
+
+        journals_hits: List[str] = []
+        extras_hits: List[str] = []
+        emails_hits: List[str] = []
+        slack_hits: List[str] = []
+
+        def _accumulate(query: str) -> None:
+            journals_hits.extend(query_index(journal_index, query, topk_journals))
+            extras_hits.extend(query_index(extras_index, query, topk_extras))
+            emails_hits.extend(query_index(email_index, query, topk_emails))
+            slack_hits.extend(query_index(slack_index, query, topk_slack))
+
+        for event in events:
+            q = " ".join([
+                event.get("summary", ""),
+                event.get("description", ""),
+                " ".join(a.get("email", "") for a in event.get("attendees", [])),
+            ])
+            _accumulate(q)
+
+        for task in tasks:
+            q = f"{task.get('content','')} {task.get('description','')}"
+            _accumulate(q)
+
+        prompt = template.format(
+            bio=bio,
+            events=json.dumps(events, indent=2, default=str, ensure_ascii=False),
+            journals=json.dumps(list(dict.fromkeys(journals_hits)), indent=2, ensure_ascii=False),
+            extras=json.dumps(list(dict.fromkeys(extras_hits)), indent=2, ensure_ascii=False),
+            emails=json.dumps(list(dict.fromkeys(emails_hits)), indent=2, ensure_ascii=False),
+            tasks=json.dumps(tasks, indent=2, default=str, ensure_ascii=False),
+            slack=json.dumps(list(dict.fromkeys(slack_hits)), indent=2, ensure_ascii=False) if slack else "",
+        )
+    else:
+        prompt = template.format(
+            bio=bio,
+            events=json.dumps(events, indent=2, default=str, ensure_ascii=False),
+            journals=json.dumps(journals, indent=2, default=str, ensure_ascii=False),
+            extras=json.dumps(extras, indent=2, default=str, ensure_ascii=False),
+            emails=json.dumps(emails, indent=2, default=str, ensure_ascii=False),
+            tasks=json.dumps(tasks, indent=2, default=str, ensure_ascii=False),
+            slack=json.dumps(slack, indent=2, default=str, ensure_ascii=False) if slack else "",
+        )
 
     if debug and not quiet:
         logger.debug("========== BEGIN PROMPT ==========")
