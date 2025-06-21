@@ -6,13 +6,10 @@ from typing import List, Optional
 import typer
 
 from ..loaders import gcal, gmail, journals, extras, todoist, slack as slack_loader
-from ..loaders.journals import load_journals
-from ..loaders.extras import load_extras
 from ..utils.date_utils import parse_date
 from ..utils.output_utils import resolve_output_path
 from ..utils.error_utils import enable_debug_logging, handle_exception
 from ..utils.summarization import summarize_daily
-from ..utils.slack_utils import send_slack_dm
 from ..utils.pdf_utils import convert_markdown_to_pdf
 from ..utils.generic_utils import check_required_directories
 
@@ -50,6 +47,7 @@ def generate(
     model: str = typer.Option(
         "gemini-2.5-pro", help="Model to use for summarization (OpenAI, Google Gemini, or Anthropic)"
     ),
+    use_embeddings: bool = typer.Option(False, help="Use embeddings for retrieval"),
     skip_path_checks: bool = typer.Option(False, help="Skip checks for existence of input and output paths"),
     debug: bool = typer.Option(False, help="Enable debug logging"),
     quiet: bool = typer.Option(False, help="Suppress output to stdout"),
@@ -88,6 +86,21 @@ def generate(
         )
         tasks = todoist.load_tasks(target_date, todoist_project=todoist_project or "")
         emails = gmail.load_emails(target_date, gmail_labels=gmail_labels)
+
+        if use_embeddings:
+            from ..utils.embeddings import ensure_index, query_index
+
+            if journal_dir:
+                journal_paths = [journal_dir / f"{j['filename']}.md" for j in journals_data]
+                idx = ensure_index([j['content'] for j in journals_data], "journals", journal_paths)
+                journals_data = query_index(str(target_date), idx, k=5)
+
+            email_texts = []
+            for msgs in emails.values():
+                for e in msgs:
+                    email_texts.append(e.get("body", ""))
+            idx_em = ensure_index(email_texts, "emails")
+            emails = query_index(str(target_date), idx_em, k=5)
         slack_data = (
             slack_loader.load_slack_messages(days_lookback=slack_days)
             if include_slack

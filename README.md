@@ -8,6 +8,8 @@ Supported commands:
 - `vea weekly` – Summarize your week
 - `vea prepare-event` – Prepare for an upcoming meeting
 - `vea check-for-tasks` – Detect untracked or unfinished to-dos based on your recent activity
+- `vea index-journals` – Build or update journal embeddings
+- `vea index-emails` – Build or update email embeddings
 
 
 ## Setup
@@ -52,6 +54,11 @@ source .venv/bin/activate
 pip install -e .
 ```
 
+The tool now relies on local embeddings. Make sure the following packages are installed:
+```bash
+pip install sentence-transformers>=2.2.2 faiss-cpu>=1.7.4
+```
+
 
 ## Daily briefing
 
@@ -88,6 +95,7 @@ Below is a complete list of options for `vea daily` (run `vea daily --help` to s
 - `--save-path` – Custom file path or directory for the output
 - `--prompt-file` – Path to a custom prompt file (default: `/prompts/daily-default.prompt`)
 - `--model` – LLM to use for summarization (e.g. `o4-mini`, `claude-3-7-sonnet-latest`, `gemini-2.5-pro-preview-05-06`)
+- `--use-embeddings` – Retrieve context from local FAISS indexes instead of sending all data
 - `--skip-path-checks` – Skip validation of input/output paths
 - `--debug` – Enable debug logging
 - `--quiet` – Suppress printing the summary to stdout
@@ -116,6 +124,7 @@ Run `vea weekly --help` to see all options. Key options include:
 - `--save-pdf` – Save the summary as a PDF
 - `--save-path` – Custom output directory or file path
 - `--prompt-file` – Path to a custom prompt file (default: `/prompts/weekly-default.prompt`)
+- `--use-embeddings` – Retrieve context from local FAISS indexes
 
 ### Prepare for an event
 
@@ -245,3 +254,6 @@ for `prepare-event`.
 ## A note from the author
 
 This tool, including this README, was 100% vibe-coded with ChatGPT 4o and OpenAI Codex. Any bugs are probably just hallucinated features.
+
+### Embedding indexes
+Run `vea index-journals` and `vea index-emails` to create FAISS indexes for your content. These indexes are stored under `~/.vea/indexes` and are automatically refreshed when source files change if you use the `--use-embeddings` flag.
