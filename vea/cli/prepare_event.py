@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 
 import typer
 
-from ..loaders import gcal, gmail, journals, extras, todoist, slack as slack_loader
+from ..loaders import gmail, journals, extras, todoist, slack as slack_loader
 from ..utils.event_utils import (
     parse_event_dt,
     find_upcoming_events,
@@ -53,6 +53,7 @@ def prepare_event(
     save_path: Optional[Path] = typer.Option(None, help="Custom file path or directory to save the output"),
     prompt_file: Optional[Path] = typer.Option(None, help="Path to custom prompt file"),
     model: str = typer.Option("gemini-2.5-pro", help="Model to use for summarization"),
+    use_embeddings: bool = typer.Option(False, help="Use embeddings for retrieval"),
     skip_path_checks: bool = typer.Option(False, help="Skip checks for existence of input and output paths"),
     debug: bool = typer.Option(False, help="Enable debug logging"),
     quiet: bool = typer.Option(False, help="Suppress output to stdout"),
@@ -123,6 +124,21 @@ def prepare_event(
         if first_dt.tzinfo is None:
             first_dt = first_dt.replace(tzinfo=tz)
         tasks = todoist.load_tasks(first_dt.date(), todoist_project=todoist_project or "")
+
+        if use_embeddings:
+            from ..embeddings import ensure_index, query_index
+
+            if journal_dir:
+                journal_paths = [journal_dir / f"{j['filename']}.md" for j in journals_data]
+                idx = ensure_index([j['content'] for j in journals_data], "journals", journal_paths)
+                journals_data = query_index(first_dt.date().isoformat(), idx, k=5)
+
+            email_texts = []
+            for msgs in emails.values():
+                for e in msgs:
+                    email_texts.append(e.get("body", ""))
+            idx_e = ensure_index(email_texts, "emails")
+            emails = query_index(first_dt.date().isoformat(), idx_e, k=5)
         slack_data = (
             slack_loader.load_slack_messages(days_lookback=slack_days)
             if include_slack

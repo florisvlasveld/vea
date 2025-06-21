@@ -1,13 +1,11 @@
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 import typer
 
-from ..loaders import gcal, journals, extras
-from ..loaders.journals import load_journals
-from ..loaders.extras import load_extras
+from ..loaders import journals, extras
 from ..utils.date_utils import parse_week_input
 from ..utils.output_utils import resolve_output_path
 from ..utils.error_utils import enable_debug_logging, handle_exception
@@ -34,6 +32,7 @@ def generate_weekly_summary(
     model: str = typer.Option(
         "gemini-2.5-pro", help="Model to use for summarization (OpenAI, Google Gemini, or Anthropic)"
     ),
+    use_embeddings: bool = typer.Option(False, help="Use embeddings for retrieval"),
     skip_path_checks: bool = typer.Option(False, help="Skip path existence checks."),
     debug: bool = typer.Option(False, help="Enable debug logging"),
     quiet: bool = typer.Option(False, help="Suppress output to stdout"),
@@ -52,10 +51,10 @@ def generate_weekly_summary(
     try:
         week_start, week_end = parse_week_input(week)
         extras_paths = [Path(extras_dir)] if extras_dir else []
-        all_extras = load_extras(extras_paths)
+        all_extras = extras.load_extras(extras_paths)
         alias_map = extras.build_alias_map(all_extras)
 
-        all_journals = load_journals(
+        all_journals = journals.load_journals(
             journal_dir,
             journal_days=journal_days,
             alias_map=alias_map,
@@ -67,6 +66,17 @@ def generate_weekly_summary(
 
         journals_in_week = [e for e in all_journals if journal_in_week(e)]
         journals_contextual = [e for e in all_journals if not journal_in_week(e)]
+
+        if use_embeddings and journal_dir:
+            from ..embeddings import ensure_index, query_index
+
+            idx = ensure_index(
+                [j["content"] for j in all_journals],
+                "journals",
+                [journal_dir / f"{j['filename']}.md" for j in all_journals],
+            )
+            journals_in_week = query_index(week_start.isoformat(), idx, k=5)
+            journals_contextual = []
         extras_data = all_extras
         bio = os.getenv("BIO", "")
 

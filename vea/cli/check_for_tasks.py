@@ -34,6 +34,7 @@ def check_for_tasks(
     model: str = typer.Option(
         "gemini-2.5-pro", help="Model to use for summarization (OpenAI, Google Gemini, or Anthropic)"
     ),
+    use_embeddings: bool = typer.Option(False, help="Use embeddings for retrieval"),
     skip_path_checks: bool = typer.Option(False, help="Skip checks for existence of input and output paths"),
     debug: bool = typer.Option(False, help="Enable debug logging"),
     quiet: bool = typer.Option(False, help="Suppress output to stdout"),
@@ -57,6 +58,21 @@ def check_for_tasks(
             else []
         )
         emails = gmail.load_emails(datetime.today().date(), gmail_labels=gmail_labels)
+
+        if use_embeddings:
+            from ..embeddings import ensure_index, query_index
+
+            if journal_dir:
+                journal_paths = [journal_dir / f"{j['filename']}.md" for j in journals_data]
+                idx = ensure_index([j['content'] for j in journals_data], "journals", journal_paths)
+                journals_data = query_index(datetime.today().date().isoformat(), idx, k=5)
+
+            email_texts = []
+            for msgs in emails.values():
+                for e in msgs:
+                    email_texts.append(e.get("body", ""))
+            idx_e = ensure_index(email_texts, "emails")
+            emails = query_index(datetime.today().date().isoformat(), idx_e, k=5)
         slack_data = (
             slack_loader.load_slack_messages(days_lookback=slack_days)
             if include_slack
