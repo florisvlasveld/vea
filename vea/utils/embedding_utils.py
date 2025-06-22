@@ -28,10 +28,24 @@ def _get_model(name: str):
     return _MODEL_CACHE[name]
 
 INDEX_DIR = Path("~/.vea/indexes").expanduser()
+    docs_list = list(documents)
     doc_items: List[Tuple[Union[str, Path], Any]] = []
     text_docs: List[str] = []
     path_mtimes: dict[str, float] = {}
-            src, obj = item
+    if not docs_list:
+        index_path = index_path.expanduser()
+        index_path.parent.mkdir(parents=True, exist_ok=True)
+        index = faiss.IndexFlatL2(1)
+        try:
+            setattr(index, "_documents", [])
+            setattr(index, "_meta_path", str(index_path.with_suffix(".meta.json")))
+        except Exception:  # pragma: no cover - unlikely
+            pass
+        if debug:
+            logger.debug("Created empty index at %s", index_path)
+        return index
+
+    for item in docs_list:
         else:
             src, obj = item, item
         doc_items.append((src, obj))
