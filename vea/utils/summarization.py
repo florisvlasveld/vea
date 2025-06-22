@@ -181,10 +181,10 @@ def summarize_daily(
             bio=bio,
             calendars=json.dumps(calendars, indent=2, default=str, ensure_ascii=False),
             tasks=json.dumps(tasks, indent=2, default=str, ensure_ascii=False),
-            emails=json.dumps(_dedupe_dicts(emails_hits), indent=2, ensure_ascii=False),
-            journals=json.dumps(_dedupe_dicts(journals_hits), indent=2, ensure_ascii=False),
-            extras=json.dumps(_dedupe_dicts(extras_hits), indent=2, ensure_ascii=False),
-            slack=json.dumps(_dedupe_dicts(slack_hits), indent=2, ensure_ascii=False) if slack else "",
+            emails=json.dumps(_dedupe_dicts(emails_hits), indent=2, default=str, ensure_ascii=False),
+            journals=json.dumps(_dedupe_dicts(journals_hits), indent=2, default=str, ensure_ascii=False),
+            extras=json.dumps(_dedupe_dicts(extras_hits), indent=2, default=str, ensure_ascii=False),
+            slack=json.dumps(_dedupe_dicts(slack_hits), indent=2, default=str, ensure_ascii=False) if slack else "",
         )
     else:
         prompt = render_daily_prompt(
@@ -322,11 +322,11 @@ def summarize_event_preparation(
         prompt = template.format(
             bio=bio,
             events=json.dumps(events, indent=2, default=str, ensure_ascii=False),
-            journals=json.dumps(_dedupe_dicts(journals_hits), indent=2, ensure_ascii=False),
-            extras=json.dumps(_dedupe_dicts(extras_hits), indent=2, ensure_ascii=False),
-            emails=json.dumps(_dedupe_dicts(emails_hits), indent=2, ensure_ascii=False),
+            journals=json.dumps(_dedupe_dicts(journals_hits), indent=2, default=str, ensure_ascii=False),
+            extras=json.dumps(_dedupe_dicts(extras_hits), indent=2, default=str, ensure_ascii=False),
+            emails=json.dumps(_dedupe_dicts(emails_hits), indent=2, default=str, ensure_ascii=False),
             tasks=json.dumps(tasks, indent=2, default=str, ensure_ascii=False),
-            slack=json.dumps(_dedupe_dicts(slack_hits), indent=2, ensure_ascii=False) if slack else "",
+            slack=json.dumps(_dedupe_dicts(slack_hits), indent=2, default=str, ensure_ascii=False) if slack else "",
         )
     else:
         prompt = template.format(
