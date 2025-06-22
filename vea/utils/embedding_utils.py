@@ -27,6 +27,7 @@ def _get_model(name: str):
         _MODEL_CACHE[name] = SentenceTransformer(name)
     return _MODEL_CACHE[name]
 
+
 INDEX_DIR = Path("~/.vea/indexes").expanduser()
 MODEL_NAME = "BAAI/bge-base-en-v1.5"
     doc_items: List[Tuple[Union[str, Path], Any]] = []
