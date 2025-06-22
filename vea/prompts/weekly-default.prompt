@@ -30,23 +30,28 @@ Use only journal entries from the **specified week** as the **primary input** fo
 ### Collected Data
 
 == Current Week Journal Entries (JSON) ==
-Use these as your main input. Each entry includes:
-- `filename`: formatted as `YYYY_MM_DD`
-- `content`: written in **Logseq outliner format**, where indentation reflects hierarchy. Use child bullets as elaboration or subpoints.
-- `date`
+- Use these as your main input. 
+- Journal entries are provided as structured data with `filename`, `content`, and `date` (format `YYYY_MM_DD`).
 - Journals follow the Logseq outliner format with indentation used to indicate hierarchy. Child bullets are nested under parent topics using consistent indentation. Treat deeper levels as subpoints or elaboration.
 
 {journals_in_week}
+
 
 == Contextual Journal Entries (JSON) ==
 These are outside the current week. Use them only to inform your understanding of ongoing topics or background context. Do not summarize or directly reference them unless essential.
 
 {journals_contextual}
 
+
 == Additional Notes (JSON) ==
-These structured notes may include useful context. Use these only if they provide relevant insights into the week’s events or themes.
+- These structured notes may include useful context. Use these only if they provide relevant insights into the week’s events or themes.
+- Additional notes follow the Logseq outliner format with indentation used to indicate hierarchy. Child bullets are nested under parent topics using consistent indentation. Treat deeper levels as subpoints or elaboration.
+- Some journal entries include references like `[[Example]]`. These have already been resolved using a canonical alias map. For example, `[[Sample]]` or `[[Voorbeeld]]` would both resolve to `[[Example]]` if `alias:: sample, voorbeeld` was found in the `Example.md` file.
+- Some files in Additional Information may include inline CSV data (e.g., plain-text tables). If the data appears relevant to a task or event, interpret the table and extract any useful insights.
+
 
 {extras}
+
 
 ---
 
