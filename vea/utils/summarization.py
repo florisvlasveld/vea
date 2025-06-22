@@ -1,7 +1,7 @@
 import logging
 import json
 import re
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any, List, Dict, Optional, Union, Tuple
 
@@ -75,6 +75,20 @@ def _dedupe_dicts(items: List[dict]) -> List[dict]:
             seen.add(key)
             result.append(item)
     return result
+
+
+def sort_by_timestamp(items: List[dict], fields: List[str]) -> List[dict]:
+    """Return ``items`` ordered by the first ISO timestamp found in ``fields``."""
+    def _parse(item: dict):
+        for f in fields:
+            if f in item and item[f] is not None:
+                try:
+                    return datetime.fromisoformat(str(item[f]))
+                except Exception:
+                    break
+        return datetime.min
+
+    return sorted(items, key=_parse)
 
 def summarize_daily(
     model: str,
@@ -166,22 +180,27 @@ def summarize_daily(
             bio=bio,
             calendars=json.dumps(calendars, indent=2, default=str, ensure_ascii=False),
             tasks=json.dumps(tasks, indent=2, default=str, ensure_ascii=False),
-            emails=json.dumps(_dedupe_dicts(emails_hits), indent=2, default=str, ensure_ascii=False),
-            journals=json.dumps(_dedupe_dicts(journals_hits), indent=2, default=str, ensure_ascii=False),
-            extras=json.dumps(_dedupe_dicts(extras_hits), indent=2, default=str, ensure_ascii=False),
-            slack=json.dumps(_dedupe_dicts(slack_hits), indent=2, default=str, ensure_ascii=False) if slack else "",
+            emails=json.dumps(sort_by_timestamp(_dedupe_dicts(emails_hits), ["date", "timestamp"]), indent=2, default=str, ensure_ascii=False),
+            journals=json.dumps(sort_by_timestamp(_dedupe_dicts(journals_hits), ["date", "timestamp"]), indent=2, default=str, ensure_ascii=False),
+            extras=json.dumps(sort_by_timestamp(_dedupe_dicts(extras_hits), ["date", "timestamp"]), indent=2, default=str, ensure_ascii=False),
+            slack=json.dumps(sort_by_timestamp(_dedupe_dicts(slack_hits), ["date", "timestamp"]), indent=2, default=str, ensure_ascii=False) if slack else "",
         )
     else:
+        sorted_journals = sort_by_timestamp(journals, ["date", "timestamp"])
+        sorted_extras = sort_by_timestamp(extras, ["date", "timestamp"])
+        sorted_emails = {k: sort_by_timestamp(v, ["date", "timestamp"]) for k, v in emails.items()}
+        sorted_slack = {k: sort_by_timestamp(v, ["date", "timestamp"]) for k, v in slack.items()} if slack else None
+
         prompt = render_daily_prompt(
             prompt_template,
             date=date,
             bio=bio,
             calendars=json.dumps(calendars, indent=2, default=str, ensure_ascii=False),
             tasks=json.dumps(tasks, indent=2, default=str, ensure_ascii=False),
-            emails=json.dumps(emails, indent=2, default=str, ensure_ascii=False),
-            journals=json.dumps(journals, indent=2, default=str, ensure_ascii=False),
-            extras=json.dumps(extras, indent=2, default=str, ensure_ascii=False),
-            slack=json.dumps(slack, indent=2, default=str, ensure_ascii=False) if slack else "",
+            emails=json.dumps(sorted_emails, indent=2, default=str, ensure_ascii=False),
+            journals=json.dumps(sorted_journals, indent=2, default=str, ensure_ascii=False),
+            extras=json.dumps(sorted_extras, indent=2, default=str, ensure_ascii=False),
+            slack=json.dumps(sorted_slack, indent=2, default=str, ensure_ascii=False) if sorted_slack else "",
         )
 
     if debug and not quiet:
@@ -307,21 +326,26 @@ def summarize_event_preparation(
         prompt = template.format(
             bio=bio,
             events=json.dumps(events, indent=2, default=str, ensure_ascii=False),
-            journals=json.dumps(_dedupe_dicts(journals_hits), indent=2, default=str, ensure_ascii=False),
-            extras=json.dumps(_dedupe_dicts(extras_hits), indent=2, default=str, ensure_ascii=False),
-            emails=json.dumps(_dedupe_dicts(emails_hits), indent=2, default=str, ensure_ascii=False),
+            journals=json.dumps(sort_by_timestamp(_dedupe_dicts(journals_hits), ["date", "timestamp"]), indent=2, default=str, ensure_ascii=False),
+            extras=json.dumps(sort_by_timestamp(_dedupe_dicts(extras_hits), ["date", "timestamp"]), indent=2, default=str, ensure_ascii=False),
+            emails=json.dumps(sort_by_timestamp(_dedupe_dicts(emails_hits), ["date", "timestamp"]), indent=2, default=str, ensure_ascii=False),
             tasks=json.dumps(tasks, indent=2, default=str, ensure_ascii=False),
-            slack=json.dumps(_dedupe_dicts(slack_hits), indent=2, default=str, ensure_ascii=False) if slack else "",
+            slack=json.dumps(sort_by_timestamp(_dedupe_dicts(slack_hits), ["date", "timestamp"]), indent=2, default=str, ensure_ascii=False) if slack else "",
         )
     else:
+        sorted_journals = sort_by_timestamp(journals, ["date", "timestamp"])
+        sorted_extras = sort_by_timestamp(extras, ["date", "timestamp"])
+        sorted_emails = {k: sort_by_timestamp(v, ["date", "timestamp"]) for k, v in emails.items()}
+        sorted_slack = {k: sort_by_timestamp(v, ["date", "timestamp"]) for k, v in slack.items()} if slack else None
+
         prompt = template.format(
             bio=bio,
             events=json.dumps(events, indent=2, default=str, ensure_ascii=False),
-            journals=json.dumps(journals, indent=2, default=str, ensure_ascii=False),
-            extras=json.dumps(extras, indent=2, default=str, ensure_ascii=False),
-            emails=json.dumps(emails, indent=2, default=str, ensure_ascii=False),
+            journals=json.dumps(sorted_journals, indent=2, default=str, ensure_ascii=False),
+            extras=json.dumps(sorted_extras, indent=2, default=str, ensure_ascii=False),
+            emails=json.dumps(sorted_emails, indent=2, default=str, ensure_ascii=False),
             tasks=json.dumps(tasks, indent=2, default=str, ensure_ascii=False),
-            slack=json.dumps(slack, indent=2, default=str, ensure_ascii=False) if slack else "",
+            slack=json.dumps(sorted_slack, indent=2, default=str, ensure_ascii=False) if sorted_slack else "",
         )
 
     if debug and not quiet:
