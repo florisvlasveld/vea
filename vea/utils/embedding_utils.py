@@ -3,7 +3,7 @@ import logging
 import hashlib
 import time
 from pathlib import Path
-from typing import Iterable, List
+from typing import Any, Iterable, List, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
@@ -38,19 +38,32 @@ def _hash_documents(docs: List[str]) -> str:
 
 def load_or_create_index(
     index_path: Path,
-    documents: Iterable[str],
+    documents: Iterable[Union[str, Tuple[str, Any]]],
     model_name: str = MODEL_NAME,
     debug: bool = False,
-):
-    """Load a FAISS index from ``index_path`` or create it from ``documents``."""
+) -> "faiss.Index":
+    """Load a FAISS index from ``index_path`` or create it from ``documents``.
+
+    ``documents`` may contain plain strings or ``(text, obj)`` tuples. Only the
+    text portion is embedded and hashed, while the corresponding objects are
+    attached to the index and returned by :func:`query_index`.
+    """
     if faiss is None or SentenceTransformer is None:  # pragma: no cover
         raise RuntimeError("faiss and sentence_transformers are required")
 
-    docs = list(documents)
+    texts: List[str] = []
+    objects: List[Any] = []
+    for item in documents:
+        if isinstance(item, tuple):
+            text, obj = item
+        else:
+            text, obj = str(item), item
+        texts.append(text)
+        objects.append(obj)
     index_path = index_path.expanduser()
     index_path.parent.mkdir(parents=True, exist_ok=True)
     meta_path = index_path.with_suffix(".meta.json")
-    docs_hash = _hash_documents(docs)
+    docs_hash = _hash_documents(texts)
 
     if index_path.is_file() and meta_path.is_file():
         try:
@@ -60,7 +73,7 @@ def load_or_create_index(
         if meta.get("hash") == docs_hash:
             index = faiss.read_index(str(index_path))
             try:
-                setattr(index, "_documents", docs)
+                setattr(index, "_documents", objects)
             except Exception:  # pragma: no cover - unlikely
                 pass
             if debug:
@@ -70,21 +83,21 @@ def load_or_create_index(
     if debug:
         logger.debug("Creating new index at %s", index_path)
     model = _get_model(model_name)
-    embeddings = model.encode(docs, convert_to_numpy=True)
+    embeddings = model.encode(texts, convert_to_numpy=True)
     dim = embeddings.shape[1]
     index = faiss.IndexFlatL2(dim)
     index.add(embeddings)
     faiss.write_index(index, str(index_path))
     meta_path.write_text(json.dumps({"hash": docs_hash, "timestamp": time.time()}))
     try:
-        setattr(index, "_documents", docs)
+        setattr(index, "_documents", objects)
     except Exception:  # pragma: no cover - unlikely
         pass
     return index
 
 
-def query_index(index, query_text: str, top_k: int) -> List[str]:
-    """Return the top ``top_k`` documents most relevant to ``query_text``."""
+def query_index(index, query_text: str, top_k: int) -> List[Any]:
+    """Return the stored objects for the top ``top_k`` matches to ``query_text``."""
     if SentenceTransformer is None or faiss is None:  # pragma: no cover
         raise RuntimeError("faiss and sentence_transformers are required")
 

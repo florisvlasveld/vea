@@ -3,7 +3,7 @@ import json
 import re
 from datetime import date
 from pathlib import Path
-from typing import List, Dict, Optional, Union
+from typing import Any, List, Dict, Optional, Union, Tuple
 
 from vea.utils.llm_utils import run_llm_prompt
 from vea.utils.embedding_utils import (
@@ -65,6 +65,17 @@ def _split_bullets(text: str) -> List[str]:
         parts.append("\n".join(current).strip())
     return [p for p in parts if p.strip()]
 
+
+def _dedupe_dicts(items: List[dict]) -> List[dict]:
+    seen = set()
+    result = []
+    for item in items:
+        key = json.dumps(item, sort_keys=True, default=str)
+        if key not in seen:
+            seen.add(key)
+            result.append(item)
+    return result
+
 '''
 prompt = render_daily_prompt(
         prompt_template,
@@ -104,38 +115,47 @@ def summarize_daily(
     prompt_template = load_prompt_template(prompt_path)
 
     if use_embeddings:
-        journal_docs: List[str] = []
+        journal_docs: List[Tuple[str, dict]] = []
         for entry in journals:
             content = entry.get("content", "")
             if outliner_mode:
-                journal_docs.extend(_split_bullets(content))
+                for part in _split_bullets(content):
+                    doc = {
+                        "filename": entry.get("filename"),
+                        "date": entry.get("date"),
+                        "content": part,
+                    }
+                    journal_docs.append((part, doc))
             else:
-                journal_docs.append(content)
+                journal_docs.append((content, entry))
 
-        extras_docs = [e.get("content", "") for e in extras]
+        extras_docs: List[Tuple[str, dict]] = []
+        for e in extras:
+            extras_docs.append((e.get("content", ""), e))
 
-        email_docs: List[str] = []
+        email_docs: List[Tuple[str, dict]] = []
         for msgs in emails.values():
             for m in msgs:
-                email_docs.append(f"{m.get('subject','')} {m.get('body','')}")
+                text = f"{m.get('subject','')} {m.get('body','')}"
+                email_docs.append((text, m))
 
-        slack_docs: List[str] = []
+        slack_docs: List[Tuple[str, dict]] = []
         if slack:
             for msgs in slack.values():
                 for m in msgs:
-                    slack_docs.append(m.get("text", ""))
+                    slack_docs.append((m.get("text", ""), m))
                     for r in m.get("replies", []):
-                        slack_docs.append(r.get("text", ""))
+                        slack_docs.append((r.get("text", ""), r))
 
         journal_index = load_or_create_index(INDEX_DIR / "journals.index", journal_docs, debug=debug)
         extras_index = load_or_create_index(INDEX_DIR / "extras.index", extras_docs, debug=debug)
         email_index = load_or_create_index(INDEX_DIR / "emails.index", email_docs, debug=debug)
         slack_index = load_or_create_index(INDEX_DIR / "slack.index", slack_docs, debug=debug)
 
-        journals_hits: List[str] = []
-        extras_hits: List[str] = []
-        emails_hits: List[str] = []
-        slack_hits: List[str] = []
+        journals_hits: List[dict] = []
+        extras_hits: List[dict] = []
+        emails_hits: List[dict] = []
+        slack_hits: List[dict] = []
 
         def _accumulate(query: str) -> None:
             journals_hits.extend(query_index(journal_index, query, topk_journals))
@@ -161,10 +181,10 @@ def summarize_daily(
             bio=bio,
             calendars=json.dumps(calendars, indent=2, default=str, ensure_ascii=False),
             tasks=json.dumps(tasks, indent=2, default=str, ensure_ascii=False),
-            emails=json.dumps(list(dict.fromkeys(emails_hits)), indent=2, ensure_ascii=False),
-            journals=json.dumps(list(dict.fromkeys(journals_hits)), indent=2, ensure_ascii=False),
-            extras=json.dumps(list(dict.fromkeys(extras_hits)), indent=2, ensure_ascii=False),
-            slack=json.dumps(list(dict.fromkeys(slack_hits)), indent=2, ensure_ascii=False) if slack else "",
+            emails=json.dumps(_dedupe_dicts(emails_hits), indent=2, ensure_ascii=False),
+            journals=json.dumps(_dedupe_dicts(journals_hits), indent=2, ensure_ascii=False),
+            extras=json.dumps(_dedupe_dicts(extras_hits), indent=2, ensure_ascii=False),
+            slack=json.dumps(_dedupe_dicts(slack_hits), indent=2, ensure_ascii=False) if slack else "",
         )
     else:
         prompt = render_daily_prompt(
@@ -239,38 +259,47 @@ def summarize_event_preparation(
     template = load_prompt_template(prompt_path or APP_PREPARE_EVENT_PROMPT_PATH)
 
     if use_embeddings:
-        journal_docs: List[str] = []
+        journal_docs: List[Tuple[str, dict]] = []
         for entry in journals:
             content = entry.get("content", "")
             if outliner_mode:
-                journal_docs.extend(_split_bullets(content))
+                for part in _split_bullets(content):
+                    doc = {
+                        "filename": entry.get("filename"),
+                        "date": entry.get("date"),
+                        "content": part,
+                    }
+                    journal_docs.append((part, doc))
             else:
-                journal_docs.append(content)
+                journal_docs.append((content, entry))
 
-        extras_docs = [e.get("content", "") for e in extras]
+        extras_docs: List[Tuple[str, dict]] = []
+        for e in extras:
+            extras_docs.append((e.get("content", ""), e))
 
-        email_docs: List[str] = []
+        email_docs: List[Tuple[str, dict]] = []
         for msgs in emails.values():
             for m in msgs:
-                email_docs.append(f"{m.get('subject','')} {m.get('body','')}")
+                text = f"{m.get('subject','')} {m.get('body','')}"
+                email_docs.append((text, m))
 
-        slack_docs: List[str] = []
+        slack_docs: List[Tuple[str, dict]] = []
         if slack:
             for msgs in slack.values():
                 for m in msgs:
-                    slack_docs.append(m.get("text", ""))
+                    slack_docs.append((m.get("text", ""), m))
                     for r in m.get("replies", []):
-                        slack_docs.append(r.get("text", ""))
+                        slack_docs.append((r.get("text", ""), r))
 
         journal_index = load_or_create_index(INDEX_DIR / "journals.index", journal_docs, debug=debug)
         extras_index = load_or_create_index(INDEX_DIR / "extras.index", extras_docs, debug=debug)
         email_index = load_or_create_index(INDEX_DIR / "emails.index", email_docs, debug=debug)
         slack_index = load_or_create_index(INDEX_DIR / "slack.index", slack_docs, debug=debug)
 
-        journals_hits: List[str] = []
-        extras_hits: List[str] = []
-        emails_hits: List[str] = []
-        slack_hits: List[str] = []
+        journals_hits: List[dict] = []
+        extras_hits: List[dict] = []
+        emails_hits: List[dict] = []
+        slack_hits: List[dict] = []
 
         def _accumulate(query: str) -> None:
             journals_hits.extend(query_index(journal_index, query, topk_journals))
@@ -293,11 +322,11 @@ def summarize_event_preparation(
         prompt = template.format(
             bio=bio,
             events=json.dumps(events, indent=2, default=str, ensure_ascii=False),
-            journals=json.dumps(list(dict.fromkeys(journals_hits)), indent=2, ensure_ascii=False),
-            extras=json.dumps(list(dict.fromkeys(extras_hits)), indent=2, ensure_ascii=False),
-            emails=json.dumps(list(dict.fromkeys(emails_hits)), indent=2, ensure_ascii=False),
+            journals=json.dumps(_dedupe_dicts(journals_hits), indent=2, ensure_ascii=False),
+            extras=json.dumps(_dedupe_dicts(extras_hits), indent=2, ensure_ascii=False),
+            emails=json.dumps(_dedupe_dicts(emails_hits), indent=2, ensure_ascii=False),
             tasks=json.dumps(tasks, indent=2, default=str, ensure_ascii=False),
-            slack=json.dumps(list(dict.fromkeys(slack_hits)), indent=2, ensure_ascii=False) if slack else "",
+            slack=json.dumps(_dedupe_dicts(slack_hits), indent=2, ensure_ascii=False) if slack else "",
         )
     else:
         prompt = template.format(

@@ -161,7 +161,7 @@ You can choose between OpenAI, Anthropic (Claude), or Google Gemini models.
 
 ### Embeddings-based retrieval
 
-Add `--use-embeddings` to `vea daily` or `vea prepare-event` to index your notes, emails and Slack messages with FAISS. Index files are stored in `~/.vea/indexes`. Journals can be split into bullet points with `--outliner-mode`. Use the `--topk-*` options to control how many passages are returned (default 20 each).
+Add `--use-embeddings` to `vea daily` or `vea prepare-event` to index your notes, emails and Slack messages with FAISS. Index files are stored in `~/.vea/indexes`. Journals can be split into bullet points with `--outliner-mode`. Use the `--topk-*` options to control how many passages are returned (default 20 each). Retrieved passages remain structured JSON objects so the prompts stay valid JSON.
 
 ### Vea Instructions in Today’s Journal
 

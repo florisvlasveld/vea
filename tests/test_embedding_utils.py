@@ -56,3 +56,10 @@ def test_index_and_query(tmp_path):
     index = load_or_create_index(index_path, docs, debug=True)
     results = query_index(index, "alpha", 2)
     assert docs[0] in results
+
+
+def test_tuple_documents(tmp_path):
+    docs = [("foo", {"id": 1}), ("bar", {"id": 2})]
+    index = load_or_create_index(tmp_path / "tuple.index", docs, debug=True)
+    res = query_index(index, "foo", 1)
+    assert res == [{"id": 1}]
