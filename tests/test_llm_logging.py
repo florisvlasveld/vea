@@ -45,7 +45,14 @@ def _setup_anthropic(monkeypatch):
 def _setup_genai(monkeypatch):
     class DummyChat:
         def send_message(self, *a, **k):
-            return types.SimpleNamespace(text="ok", usage_metadata=types.SimpleNamespace(total_tokens=7))
+            return types.SimpleNamespace(
+                text="ok",
+                usage_metadata=types.SimpleNamespace(
+                    total_token_count=7,
+                    prompt_token_count=3,
+                    candidates_token_count=4,
+                ),
+            )
 
     class DummyModel:
         def __init__(self, name):
@@ -102,4 +109,8 @@ def test_gemini_logging(monkeypatch, caplog):
     assert result == "ok"
     joined = "\n".join(r.message for r in caplog.records)
     assert "Prompt length" in joined
-    assert "total_tokens=7" in joined
+    assert (
+        "total_token_count=7" in joined
+        and "prompt_token_count=3" in joined
+        and "candidates_token_count=4" in joined
+    )

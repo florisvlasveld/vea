@@ -47,9 +47,14 @@ def run_llm_prompt(prompt: str, model: Optional[str] = None, *, quiet: bool = Fa
                     prompt,
                     generation_config={"temperature": 0.3, "max_output_tokens": 16384},
                 )
-                usage = getattr(getattr(response, "usage_metadata", None), "total_tokens", None)
-                if usage is not None:
-                    logger.debug("Token usage: total_tokens=%s", usage)
+                usage_meta = getattr(response, "usage_metadata", None)
+                if usage_meta is not None:
+                    logger.debug(
+                        "Token usage: total_token_count=%s prompt_token_count=%s candidates_token_count=%s",
+                        getattr(usage_meta, "total_token_count", None),
+                        getattr(usage_meta, "prompt_token_count", None),
+                        getattr(usage_meta, "candidates_token_count", None),
+                    )
                 return response.text.strip()
             except Exception as e:
                 wait = 2 ** attempt

@@ -76,21 +76,6 @@ def _dedupe_dicts(items: List[dict]) -> List[dict]:
             result.append(item)
     return result
 
-'''
-prompt = render_daily_prompt(
-        prompt_template,
-        date=date,
-        bio=bio,
-        calendars=str(calendars),
-        tasks=str(tasks),
-        emails=str(emails),
-        journals=str(journals),
-        extras=str(extras),
-        slack=str(slack) if slack else ""
-    )
-'''
-
-
 def summarize_daily(
     model: str,
     date: date,
