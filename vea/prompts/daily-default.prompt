@@ -143,6 +143,7 @@ Each task is a dictionary with the following fields:
     - `text`: plain text content of the message
     - `replies` (if any): replies to the message
 - Message text may includes 'mentions', such as `@John Doe`.
+- If a text line starts with `&gt;` or `> ` then consider it quoted text.
 
 {slack}
 
