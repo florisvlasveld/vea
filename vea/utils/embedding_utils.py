@@ -28,17 +28,54 @@ def _get_model(name: str):
     return _MODEL_CACHE[name]
 
 INDEX_DIR = Path("~/.vea/indexes").expanduser()
-# MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
-MODEL_NAME = "BAAI/bge-base-en-v1.5"
+    doc_items: List[Tuple[Union[str, Path], Any]] = []
+    text_docs: List[str] = []
+    path_mtimes: dict[str, float] = {}
+            src, obj = item
+        else:
+            src, obj = item, item
+        doc_items.append((src, obj))
+        if isinstance(src, (str, Path)) and Path(src).is_file():
+            p = Path(src)
+            path_mtimes[str(p)] = p.stat().st_mtime
+            text_docs.append(str(src))
+    text_hash = _hash_documents(text_docs) if text_docs else ""
+    objects = [obj for _, obj in doc_items]
 
+        if (
+            meta.get("model_name") == model_name
+            and meta.get("mtimes") == path_mtimes
+            and meta.get("text_hash") == text_hash
+        ):
+                setattr(index, "_meta_path", str(meta_path))
+    texts: List[str] = []
+    for src, _ in doc_items:
+        if isinstance(src, (str, Path)) and Path(src).is_file():
+            texts.append(Path(src).read_text(encoding="utf-8"))
+        else:
+            texts.append(str(src))
 
-def _hash_documents(docs: List[str]) -> str:
-    joined = "\u0000".join(docs)
-    return hashlib.sha256(joined.encode("utf-8")).hexdigest()
+    meta_path.write_text(
+        json.dumps(
+            {
+                "model_name": model_name,
+                "mtimes": path_mtimes,
+                "text_hash": text_hash,
+                "timestamp": time.time(),
+            }
+        )
+    )
+        setattr(index, "_meta_path", str(meta_path))
+    meta_path = getattr(index, "_meta_path", None)
+    model_name = MODEL_NAME
+    if meta_path and Path(meta_path).is_file():
+        try:
+            meta = json.loads(Path(meta_path).read_text())
+            model_name = meta.get("model_name", MODEL_NAME)
+        except Exception:
+            model_name = MODEL_NAME
 
-
-def load_or_create_index(
-    index_path: Path,
+    model = _get_model(model_name)
     documents: Iterable[Union[str, Tuple[str, Any]]],
     model_name: str = MODEL_NAME,
     debug: bool = False,

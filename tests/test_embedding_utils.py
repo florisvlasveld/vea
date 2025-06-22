@@ -1,5 +1,7 @@
+import json
 import types
 import sys
+from pathlib import Path
 
 
 # Create dummy faiss module
@@ -19,9 +21,12 @@ class DummyIndex:
         idx = sorted(range(len(dists)), key=lambda i: dists[i])[:k]
         return None, [idx]
 
+def _write_index(idx, path):
+    Path(path).write_text("idx")
+
 dummy_faiss = types.SimpleNamespace(
     IndexFlatL2=lambda dim: DummyIndex(dim),
-    write_index=lambda idx, path: None,
+    write_index=_write_index,
     read_index=lambda path: DummyIndex(0),
 )
 
@@ -63,3 +68,40 @@ def test_tuple_documents(tmp_path):
     index = load_or_create_index(tmp_path / "tuple.index", docs, debug=True)
     res = query_index(index, "foo", 1)
     assert res == [{"id": 1}]
+
+
+def test_model_name_roundtrip(tmp_path, monkeypatch):
+    called = []
+
+    def fake_get(name):
+        called.append(name)
+        return DummyModel(name)
+
+    monkeypatch.setattr(emb, "_get_model", fake_get)
+
+    doc = tmp_path / "doc.txt"
+    doc.write_text("alpha")
+
+    idx = load_or_create_index(tmp_path / "m.index", [str(doc)], model_name="special", debug=True)
+    query_index(idx, "alpha", 1)
+
+    assert called[-1] == "special"
+
+
+def test_index_rebuild_on_mtime(tmp_path):
+    doc = tmp_path / "f.txt"
+    doc.write_text("alpha")
+    idx_path = tmp_path / "mtime.index"
+
+    idx1 = load_or_create_index(idx_path, [str(doc)], debug=True)
+    meta_path = idx_path.with_suffix(".meta.json")
+    ts1 = json.loads(meta_path.read_text())["timestamp"]
+
+    idx2 = load_or_create_index(idx_path, [str(doc)], debug=True)
+    ts2 = json.loads(meta_path.read_text())["timestamp"]
+    assert abs(ts1 - ts2) < 1e-3  # no rebuild
+
+    doc.write_text("alpha changed")
+    load_or_create_index(idx_path, [str(doc)], debug=True)
+    ts3 = json.loads(meta_path.read_text())["timestamp"]
+    assert ts3 != ts2
