@@ -106,10 +106,10 @@ def summarize_daily(
     prompt_path: Optional[Path] = None,
     use_embeddings: bool = False,
     outliner_mode: bool = False,
-    topk_journals: int = 20,
-    topk_extras: int = 20,
-    topk_emails: int = 20,
-    topk_slack: int = 20,
+    topk_journals: int = 5,
+    topk_extras: int = 5,
+    topk_emails: int = 5,
+    topk_slack: int = 5,
 ) -> str:
 
     prompt_template = load_prompt_template(prompt_path)
@@ -249,10 +249,10 @@ def summarize_event_preparation(
     prompt_path: Optional[Path] = None,
     use_embeddings: bool = False,
     outliner_mode: bool = False,
-    topk_journals: int = 20,
-    topk_extras: int = 20,
-    topk_emails: int = 20,
-    topk_slack: int = 20,
+    topk_journals: int = 5,
+    topk_extras: int = 5,
+    topk_emails: int = 5,
+    topk_slack: int = 5,
 ) -> str:
     """Summarize last-minute insights for upcoming events."""
 
