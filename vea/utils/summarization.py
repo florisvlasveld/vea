@@ -77,6 +77,15 @@ def _dedupe_dicts(items: List[dict]) -> List[dict]:
     return result
 
 
+def _group_by_field(items: List[dict], field: str) -> Dict[Any, List[dict]]:
+    """Return a mapping of ``field`` values to item lists."""
+    grouped: Dict[Any, List[dict]] = {}
+    for item in items:
+        key = item.get(field)
+        grouped.setdefault(key, []).append(item)
+    return grouped
+
+
 def sort_by_timestamp(items: List[dict], fields: List[str]) -> List[dict]:
     """Return ``items`` ordered by the first ISO timestamp found in ``fields``."""
     def _parse(item: dict):
@@ -140,11 +149,12 @@ def summarize_daily(
 
         slack_docs: List[Tuple[str, dict]] = []
         if slack:
-            for msgs in slack.values():
+            for channel, msgs in slack.items():
                 for m in msgs:
-                    slack_docs.append((m.get("text", ""), m))
+                    doc = {**m, "channel": channel}
+                    slack_docs.append((m.get("text", ""), doc))
                     for r in m.get("replies", []):
-                        slack_docs.append((r.get("text", ""), r))
+                        slack_docs.append((r.get("text", ""), {**r, "channel": channel}))
 
         journal_index = load_or_create_index(INDEX_DIR / "journals.index", journal_docs, debug=debug)
         extras_index = load_or_create_index(INDEX_DIR / "extras.index", extras_docs, debug=debug)
@@ -183,7 +193,19 @@ def summarize_daily(
             emails=json.dumps(sort_by_timestamp(_dedupe_dicts(emails_hits), ["date", "timestamp"]), indent=2, default=str, ensure_ascii=False),
             journals=json.dumps(sort_by_timestamp(_dedupe_dicts(journals_hits), ["date", "timestamp"]), indent=2, default=str, ensure_ascii=False),
             extras=json.dumps(sort_by_timestamp(_dedupe_dicts(extras_hits), ["date", "timestamp"]), indent=2, default=str, ensure_ascii=False),
-            slack=json.dumps(sort_by_timestamp(_dedupe_dicts(slack_hits), ["date", "timestamp"]), indent=2, default=str, ensure_ascii=False) if slack else "",
+            slack=(
+                json.dumps(
+                    {
+                        ch: sort_by_timestamp(lst, ["date", "timestamp"])
+                        for ch, lst in _group_by_field(_dedupe_dicts(slack_hits), "channel").items()
+                    },
+                    indent=2,
+                    default=str,
+                    ensure_ascii=False,
+                )
+                if slack
+                else ""
+            ),
         )
     else:
         sorted_journals = sort_by_timestamp(journals, ["date", "timestamp"])
@@ -289,11 +311,12 @@ def summarize_event_preparation(
 
         slack_docs: List[Tuple[str, dict]] = []
         if slack:
-            for msgs in slack.values():
+            for channel, msgs in slack.items():
                 for m in msgs:
-                    slack_docs.append((m.get("text", ""), m))
+                    doc = {**m, "channel": channel}
+                    slack_docs.append((m.get("text", ""), doc))
                     for r in m.get("replies", []):
-                        slack_docs.append((r.get("text", ""), r))
+                        slack_docs.append((r.get("text", ""), {**r, "channel": channel}))
 
         journal_index = load_or_create_index(INDEX_DIR / "journals.index", journal_docs, debug=debug)
         extras_index = load_or_create_index(INDEX_DIR / "extras.index", extras_docs, debug=debug)
@@ -330,7 +353,19 @@ def summarize_event_preparation(
             extras=json.dumps(sort_by_timestamp(_dedupe_dicts(extras_hits), ["date", "timestamp"]), indent=2, default=str, ensure_ascii=False),
             emails=json.dumps(sort_by_timestamp(_dedupe_dicts(emails_hits), ["date", "timestamp"]), indent=2, default=str, ensure_ascii=False),
             tasks=json.dumps(tasks, indent=2, default=str, ensure_ascii=False),
-            slack=json.dumps(sort_by_timestamp(_dedupe_dicts(slack_hits), ["date", "timestamp"]), indent=2, default=str, ensure_ascii=False) if slack else "",
+            slack=(
+                json.dumps(
+                    {
+                        ch: sort_by_timestamp(lst, ["date", "timestamp"])
+                        for ch, lst in _group_by_field(_dedupe_dicts(slack_hits), "channel").items()
+                    },
+                    indent=2,
+                    default=str,
+                    ensure_ascii=False,
+                )
+                if slack
+                else ""
+            ),
         )
     else:
         sorted_journals = sort_by_timestamp(journals, ["date", "timestamp"])
