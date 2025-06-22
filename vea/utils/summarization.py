@@ -119,9 +119,9 @@ def summarize_daily(
         for entry in journals:
             content = entry.get("content", "")
             if outliner_mode:
-                for part in _split_bullets(content):
+                for idx, part in enumerate(_split_bullets(content), 1):
                     doc = {
-                        "filename": entry.get("filename"),
+                        "filename": f"{entry.get('filename')}-{idx}",
                         "date": entry.get("date"),
                         "content": part,
                     }
@@ -263,9 +263,9 @@ def summarize_event_preparation(
         for entry in journals:
             content = entry.get("content", "")
             if outliner_mode:
-                for part in _split_bullets(content):
+                for idx, part in enumerate(_split_bullets(content), 1):
                     doc = {
-                        "filename": entry.get("filename"),
+                        "filename": f"{entry.get('filename')}-{idx}",
                         "date": entry.get("date"),
                         "content": part,
                     }

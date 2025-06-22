@@ -65,20 +65,23 @@ def test_embeddings_return_dicts(tmp_path):
         emails={'inbox': [{'subject': 'a', 'body': 'b'}]},
         calendars=[{'summary': 'meet', 'description': 'x', 'attendees': []}],
         tasks=[{'content': 't', 'description': 'd'}],
-        journals=[{'filename': 'j', 'date': '2025-01-01', 'content': '- bullet'}],
+        journals=[{'filename': 'j', 'date': '2025-01-01', 'content': '- a\n- b'}],
         extras=[{'filename': 'e', 'content': 'extra'}],
         slack={'general': [{'text': 'hi'}]},
         quiet=True,
         debug=False,
         use_embeddings=True,
         outliner_mode=True,
-        topk_journals=1,
+        topk_journals=2,
         topk_extras=1,
         topk_emails=1,
         topk_slack=1,
     )
 
-    assert isinstance(_extract(prompt, "== Journals Entries (JSON) ==" )[0], dict)
+    journals_section = _extract(prompt, "== Journals Entries (JSON) ==")
+    assert isinstance(journals_section[0], dict)
+    assert {j['filename'] for j in journals_section} == {"j-1", "j-2"}
+
     assert isinstance(_extract(prompt, "== Additional Information (JSON) ==" )[0], dict)
     assert isinstance(_extract(prompt, "== Emails (JSON) ==" )[0], dict)
     assert isinstance(_extract(prompt, "== Slack Messages (JSON) ==" )[0], dict)
