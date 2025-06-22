@@ -17,6 +17,16 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - handled in tests
     SentenceTransformer = None  # type: ignore
 
+_MODEL_CACHE: dict[str, "SentenceTransformer"] = {}
+
+
+def _get_model(name: str):
+    if SentenceTransformer is None:  # pragma: no cover - handled in tests
+        raise RuntimeError("sentence_transformers is required")
+    if name not in _MODEL_CACHE:
+        _MODEL_CACHE[name] = SentenceTransformer(name)
+    return _MODEL_CACHE[name]
+
 INDEX_DIR = Path("~/.vea/indexes").expanduser()
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 
@@ -59,7 +69,7 @@ def load_or_create_index(
 
     if debug:
         logger.debug("Creating new index at %s", index_path)
-    model = SentenceTransformer(model_name)
+    model = _get_model(model_name)
     embeddings = model.encode(docs, convert_to_numpy=True)
     dim = embeddings.shape[1]
     index = faiss.IndexFlatL2(dim)
@@ -82,7 +92,7 @@ def query_index(index, query_text: str, top_k: int) -> List[str]:
     if not docs:
         return []
 
-    model = SentenceTransformer(MODEL_NAME)
+    model = _get_model(MODEL_NAME)
     query_vec = model.encode([query_text], convert_to_numpy=True)
     _, indices = index.search(query_vec, min(top_k, len(docs)))
     result = []
