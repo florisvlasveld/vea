@@ -28,7 +28,8 @@ def _get_model(name: str):
     return _MODEL_CACHE[name]
 
 INDEX_DIR = Path("~/.vea/indexes").expanduser()
-MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+# MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+MODEL_NAME = "BAAI/bge-base-en-v1.5"
 
 
 def _hash_documents(docs: List[str]) -> str:
