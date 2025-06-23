@@ -13,7 +13,7 @@ _Important note: If you come across a mention of `Vea` or `[[Vea]]` in the journ
 # Preparation Notes ({date})
 
 ## 1. Events
-   - List calendar events for {date}, including start times. Do **not** include event descriptions.
+   - List calendar events for {date}, including start times, each on a new line. Do **not** include event descriptions.
    - Show the event time in bold (e.g., **09:00:**, or **All-day:**) followed by the event title in normal font.
    - Only mention timezones if events occur in different timezones where the time differs.
    - Include all-day events at the top of the list.
@@ -130,7 +130,7 @@ Each task is a dictionary with the following fields:
 == Additional Information (JSON) ==
 - Additional notes are provided as structured data with `filename`, `content`,  and 'aliases'.
 - Additional notes follow the Logseq outliner format with indentation used to indicate hierarchy. Child bullets are nested under parent topics using consistent indentation. Treat deeper levels as subpoints or elaboration.
-- Some journal entries include references like `[[Example]]`. These have already been resolved using a canonical alias map. For example, `[[Sample]]` or `[[Voorbeeld]]` would both resolve to `[[Example]]` if `alias:: sample, voorbeeld` was found in the `Example.md` file.
+- Some notes entries include references like `[[Example]]`. These have already been resolved using a canonical alias map. For example, `[[Sample]]` or `[[Voorbeeld]]` would both resolve to `[[Example]]` if `alias:: sample, voorbeeld` was found in the `Example.md` file.
 - Some files in Additional Information may include inline CSV data (e.g., plain-text tables). If the data appears relevant to a task or event, interpret the table and extract any useful insights.
 
 {extras}

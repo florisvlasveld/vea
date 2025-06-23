@@ -47,6 +47,12 @@ def prepare_event(
         3,
         help="Number of past days of Slack messages to load",
     ),
+    use_embeddings: bool = typer.Option(False, help="Use embeddings-based retrieval"),
+    outliner_mode: bool = typer.Option(False, help="Split journals by top-level bullets"),
+    topk_journals: int = typer.Option(10, help="Top K journal passages"),
+    topk_extras: int = typer.Option(5, help="Top K extras passages"),
+    topk_emails: int = typer.Option(5, help="Top K email passages"),
+    topk_slack: int = typer.Option(20, help="Top K Slack passages"),
     slack_dm: bool = typer.Option(False, help="Send the output as a DM to yourself on Slack"),
     save_markdown: bool = typer.Option(True, help="Save output to Markdown file"),
     save_pdf: bool = typer.Option(False, help="Save output to PDF file"),
@@ -142,6 +148,12 @@ def prepare_event(
             prompt_path=prompt_path,
             quiet=quiet,
             debug=debug,
+            use_embeddings=use_embeddings,
+            outliner_mode=outliner_mode,
+            topk_journals=topk_journals,
+            topk_extras=topk_extras,
+            topk_emails=topk_emails,
+            topk_slack=topk_slack,
         )
 
         if not quiet:

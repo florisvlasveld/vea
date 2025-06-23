@@ -30,6 +30,8 @@ def run_llm_prompt(prompt: str, model: Optional[str] = None, *, quiet: bool = Fa
     else:
         logger.info("Sending collected data to %s...", model)
 
+    logger.debug("Prompt length: %d", len(prompt))
+
     openai.api_key = os.getenv("OPENAI_API_KEY", os.getenv("OPENAI_KEY", ""))
     anthropic.api_key = os.getenv("ANTHROPIC_API_KEY", "")
     genai.configure(api_key=os.getenv("GEMINI_API_KEY", ""))
@@ -41,7 +43,18 @@ def run_llm_prompt(prompt: str, model: Optional[str] = None, *, quiet: bool = Fa
         chat = model_obj.start_chat(history=[])
         for attempt in range(5):
             try:
-                response = chat.send_message(prompt, generation_config={"temperature": 0.3, "max_output_tokens": 16384})
+                response = chat.send_message(
+                    prompt,
+                    generation_config={"temperature": 0.3, "max_output_tokens": 16384},
+                )
+                usage_meta = getattr(response, "usage_metadata", None)
+                if usage_meta is not None:
+                    logger.debug(
+                        "Token usage: total_token_count=%s prompt_token_count=%s candidates_token_count=%s",
+                        getattr(usage_meta, "total_token_count", None),
+                        getattr(usage_meta, "prompt_token_count", None),
+                        getattr(usage_meta, "candidates_token_count", None),
+                    )
                 return response.text.strip()
             except Exception as e:
                 wait = 2 ** attempt
@@ -58,8 +71,15 @@ def run_llm_prompt(prompt: str, model: Optional[str] = None, *, quiet: bool = Fa
                     model=model,
                     max_tokens=16384,
                     temperature=0.3,
-                    messages=[{"role": "user", "content": prompt}]
+                    messages=[{"role": "user", "content": prompt}],
                 )
+                usage = getattr(result, "usage", None)
+                if usage:
+                    logger.debug(
+                        "Token usage: input_tokens=%s output_tokens=%s",
+                        getattr(usage, "input_tokens", None),
+                        getattr(usage, "output_tokens", None),
+                    )
                 return result.content[0].text.strip()
             except Exception as e:
                 wait = 2 ** attempt
@@ -80,6 +100,9 @@ def run_llm_prompt(prompt: str, model: Optional[str] = None, *, quiet: bool = Fa
                     kwargs["temperature"] = 0.3
                     kwargs["max_tokens"] = 16384
                 response = client.responses.create(**kwargs)
+                usage = getattr(getattr(response, "usage", None), "total_tokens", None)
+                if usage is not None:
+                    logger.debug("Token usage: total_tokens=%s", usage)
                 return response.output_text.strip()
 
             kwargs = {
@@ -92,6 +115,9 @@ def run_llm_prompt(prompt: str, model: Optional[str] = None, *, quiet: bool = Fa
                 kwargs["max_tokens"] = 16384
 
             response = client.chat.completions.create(**kwargs)
+            usage = getattr(getattr(response, "usage", None), "total_tokens", None)
+            if usage is not None:
+                logger.debug("Token usage: total_tokens=%s", usage)
             return response.choices[0].message.content.strip()
 
         except Exception as e:

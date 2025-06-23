@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 MAX_INBOX = 25
 TOKEN_PATH = Path(".credentials/gmail_token.json")
 SNIPPET_SIZE = 500
-MAX_BODY_LENGTH = 2000
+MAX_BODY_LENGTH = 3000
 
 
 def load_emails(target_date: datetime.date, token_unused: Optional[str] = None, gmail_labels: Optional[List[str]] = None) -> Dict[str, List[Dict[str, str]]]:

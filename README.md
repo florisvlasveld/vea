@@ -81,13 +81,19 @@ Below is a complete list of options for `vea daily` (run `vea daily --help` to s
 - `--my-email` – Your email address (used to ignore declined events)
 - `--include-slack / --no-include-slack` – Include recent Slack messages (default: true)
 - `--slack-days` – Number of past days of Slack messages to load (default: 5)
+- `--use-embeddings` – Retrieve only the most relevant snippets using FAISS indexes
+- `--outliner-mode` – Split journal entries by top-level bullets
+- `--topk-journals` – Number of journal passages to include (default: 5)
+- `--topk-extras` – Number of extras passages to include (default: 5)
+- `--topk-emails` – Number of email passages to include (default: 5)
+- `--topk-slack` – Number of Slack passages to include (default: 5)
 - `--calendar-blacklist` – Comma-separated substrings to filter out calendar events (overrides `CALENDAR_EVENT_BLACKLIST`)
 - `--skip-past-events` – Ignore calendar events that have already started today
 - `--save-markdown / --no-save-markdown` – Write the summary to a Markdown file (default: true)
 - `--save-pdf` – Save the summary as a PDF file
 - `--save-path` – Custom file path or directory for the output
 - `--prompt-file` – Path to a custom prompt file (default: `/prompts/daily-default.prompt`)
-- `--model` – LLM to use for summarization (e.g. `o4-mini`, `claude-3-7-sonnet-latest`, `gemini-2.5-pro-preview-05-06`)
+- `--model` – LLM to use for summarization (e.g. `o4-mini`, `claude-3-7-sonnet-latest`, `gemini-2.5-pro`)
 - `--skip-path-checks` – Skip validation of input/output paths
 - `--debug` – Enable debug logging
 - `--quiet` – Suppress printing the summary to stdout
@@ -131,6 +137,12 @@ Key options include:
 - `--journal-dir` – Directory with Markdown journal files
 - `--journal-days` – Number of past journal days to include (default: 21)
 - `--slack-days` – Number of past days of Slack messages to load (default: 5)
+- `--use-embeddings` – Retrieve only the most relevant snippets using FAISS indexes
+- `--outliner-mode` – Split journal entries by top-level bullets
+- `--topk-journals` – Number of journal passages to include (default: 5)
+- `--topk-extras` – Number of extras passages to include (default: 5)
+- `--topk-emails` – Number of email passages to include (default: 5)
+- `--topk-slack` – Number of Slack passages to include (default: 5)
 - `--slack-dm` – Send the output as a Slack DM to yourself
 
 ### Check for forgotten tasks
@@ -146,6 +158,10 @@ This command detects untracked or unfinished to-dos based on your recent activit
 ### AI Summary Engine
 
 You can choose between OpenAI, Anthropic (Claude), or Google Gemini models.
+
+### Embeddings-based retrieval
+
+Add `--use-embeddings` to `vea daily` or `vea prepare-event` to index your notes, emails and Slack messages with FAISS. Index files are stored in `~/.vea/indexes`. Journals can be split into bullet points with `--outliner-mode`. Use the `--topk-*` options to control how many passages are returned (default 5 each). Retrieved passages remain structured JSON objects so the prompts stay valid JSON. When Slack snippets are retrieved through embeddings they are still grouped by channel or DM.
 
 ### Vea Instructions in Today’s Journal
 
