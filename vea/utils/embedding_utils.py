@@ -29,7 +29,7 @@ def _get_model(name: str):
 
 
 INDEX_DIR = Path("~/.vea/indexes").expanduser()
-MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+MODEL_NAME = "BAAI/bge-base-en-v1.5"
     doc_items: List[Tuple[Union[str, Path], Any]] = []
     text_docs: List[str] = []
     path_mtimes: dict[str, float] = {}

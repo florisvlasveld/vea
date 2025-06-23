@@ -83,10 +83,10 @@ Below is a complete list of options for `vea daily` (run `vea daily --help` to s
 - `--slack-days` – Number of past days of Slack messages to load (default: 5)
 - `--use-embeddings` – Retrieve only the most relevant snippets using FAISS indexes
 - `--outliner-mode` – Split journal entries by top-level bullets
-- `--topk-journals` – Number of journal passages to include (default: 5)
+- `--topk-journals` – Number of journal passages to include (default: 10)
 - `--topk-extras` – Number of extras passages to include (default: 5)
 - `--topk-emails` – Number of email passages to include (default: 5)
-- `--topk-slack` – Number of Slack passages to include (default: 5)
+- `--topk-slack` – Number of Slack passages to include (default: 20)
 - `--calendar-blacklist` – Comma-separated substrings to filter out calendar events (overrides `CALENDAR_EVENT_BLACKLIST`)
 - `--skip-past-events` – Ignore calendar events that have already started today
 - `--save-markdown / --no-save-markdown` – Write the summary to a Markdown file (default: true)
@@ -139,10 +139,10 @@ Key options include:
 - `--slack-days` – Number of past days of Slack messages to load (default: 5)
 - `--use-embeddings` – Retrieve only the most relevant snippets using FAISS indexes
 - `--outliner-mode` – Split journal entries by top-level bullets
-- `--topk-journals` – Number of journal passages to include (default: 5)
+- `--topk-journals` – Number of journal passages to include (default: 10)
 - `--topk-extras` – Number of extras passages to include (default: 5)
 - `--topk-emails` – Number of email passages to include (default: 5)
-- `--topk-slack` – Number of Slack passages to include (default: 5)
+- `--topk-slack` – Number of Slack passages to include (default: 20)
 - `--slack-dm` – Send the output as a Slack DM to yourself
 
 ### Check for forgotten tasks
@@ -161,7 +161,7 @@ You can choose between OpenAI, Anthropic (Claude), or Google Gemini models.
 
 ### Embeddings-based retrieval
 
-Add `--use-embeddings` to `vea daily` or `vea prepare-event` to index your notes, emails and Slack messages with FAISS. Index files are stored in `~/.vea/indexes`. Journals can be split into bullet points with `--outliner-mode`. Use the `--topk-*` options to control how many passages are returned (defaults: 5 for journals, extras, emails and Slack). Retrieved passages remain structured JSON objects so the prompts stay valid JSON.
+Add `--use-embeddings` to `vea daily` or `vea prepare-event` to index your notes, emails and Slack messages with FAISS. Index files are stored in `~/.vea/indexes`. Journals can be split into bullet points with `--outliner-mode`. Use the `--topk-*` options to control how many passages are returned (defaults: 10 for journals, 5 for extras, 5 for emails, 20 for Slack). Retrieved passages remain structured JSON objects so the prompts stay valid JSON.
 
 Indexes are cached with their embedding model name and reused until the source files change, so repeated runs are fast.
 
