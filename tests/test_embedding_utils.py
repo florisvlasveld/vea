@@ -99,7 +99,7 @@ def test_index_rebuild_on_mtime(tmp_path):
 
     idx2 = load_or_create_index(idx_path, [str(doc)], debug=True)
     ts2 = json.loads(meta_path.read_text())["timestamp"]
-    assert abs(ts1 - ts2) < 1e-2  # no rebuild
+    assert abs(ts1 - ts2) < 1e-3  # no rebuild
 
     doc.write_text("alpha changed")
     load_or_create_index(idx_path, [str(doc)], debug=True)
