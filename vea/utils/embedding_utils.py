@@ -29,30 +29,7 @@ def _get_model(name: str):
 
 
 INDEX_DIR = Path("~/.vea/indexes").expanduser()
-MODEL_NAME = "BAAI/bge-base-en-v1.5"
-
-
-def _hash_documents(docs: List[str]) -> str:
-    joined = "\u0000".join(docs)
-    return hashlib.sha256(joined.encode("utf-8")).hexdigest()
-
-
-def load_or_create_index(
-    index_path: Path,
-    documents: Iterable[Union[str, Tuple[str, Any]]],
-    model_name: str = MODEL_NAME,
-    debug: bool = False,
-) -> "faiss.Index":
-    """Load a FAISS index from ``index_path`` or create it from ``documents``.
-
-    ``documents`` may contain plain strings or ``(text, obj)`` tuples. Only the
-    text portion is embedded and hashed, while the corresponding objects are
-    attached to the index and returned by :func:`query_index`.
-    """
-    if faiss is None or SentenceTransformer is None:  # pragma: no cover
-        raise RuntimeError("faiss and sentence_transformers are required")
-
-    docs_list = list(documents)
+MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
     doc_items: List[Tuple[Union[str, Path], Any]] = []
     text_docs: List[str] = []
     path_mtimes: dict[str, float] = {}
@@ -70,44 +47,22 @@ def load_or_create_index(
         return index
 
     for item in docs_list:
-        if isinstance(item, tuple):
-            src, obj = item
         else:
             src, obj = item, item
         doc_items.append((src, obj))
         if isinstance(src, (str, Path)) and Path(src).is_file():
             p = Path(src)
             path_mtimes[str(p)] = p.stat().st_mtime
-        else:
             text_docs.append(str(src))
     text_hash = _hash_documents(text_docs) if text_docs else ""
     objects = [obj for _, obj in doc_items]
-    index_path = index_path.expanduser()
-    index_path.parent.mkdir(parents=True, exist_ok=True)
-    meta_path = index_path.with_suffix(".meta.json")
 
-    if index_path.is_file() and meta_path.is_file():
-        try:
-            meta = json.loads(meta_path.read_text())
-        except Exception:
-            meta = {}
         if (
             meta.get("model_name") == model_name
             and meta.get("mtimes") == path_mtimes
             and meta.get("text_hash") == text_hash
         ):
-            index = faiss.read_index(str(index_path))
-            try:
-                setattr(index, "_documents", objects)
                 setattr(index, "_meta_path", str(meta_path))
-            except Exception:  # pragma: no cover - unlikely
-                pass
-            if debug:
-                logger.debug("Loaded existing index from %s", index_path)
-            return index
-
-    if debug:
-        logger.debug("Creating new index at %s", index_path)
     texts: List[str] = []
     for src, _ in doc_items:
         if isinstance(src, (str, Path)) and Path(src).is_file():
@@ -115,12 +70,6 @@ def load_or_create_index(
         else:
             texts.append(str(src))
 
-    model = _get_model(model_name)
-    embeddings = model.encode(texts, convert_to_numpy=True)
-    dim = embeddings.shape[1]
-    index = faiss.IndexFlatL2(dim)
-    index.add(embeddings)
-    faiss.write_index(index, str(index_path))
     meta_path.write_text(
         json.dumps(
             {
@@ -131,9 +80,70 @@ def load_or_create_index(
             }
         )
     )
+        setattr(index, "_meta_path", str(meta_path))
+    meta_path = getattr(index, "_meta_path", None)
+    model_name = MODEL_NAME
+    if meta_path and Path(meta_path).is_file():
+        try:
+            meta = json.loads(Path(meta_path).read_text())
+            model_name = meta.get("model_name", MODEL_NAME)
+        except Exception:
+            model_name = MODEL_NAME
+
+    model = _get_model(model_name)
+    documents: Iterable[Union[str, Tuple[str, Any]]],
+    model_name: str = MODEL_NAME,
+    debug: bool = False,
+) -> "faiss.Index":
+    """Load a FAISS index from ``index_path`` or create it from ``documents``.
+
+    ``documents`` may contain plain strings or ``(text, obj)`` tuples. Only the
+    text portion is embedded and hashed, while the corresponding objects are
+    attached to the index and returned by :func:`query_index`.
+    """
+    if faiss is None or SentenceTransformer is None:  # pragma: no cover
+        raise RuntimeError("faiss and sentence_transformers are required")
+
+    texts: List[str] = []
+    objects: List[Any] = []
+    for item in documents:
+        if isinstance(item, tuple):
+            text, obj = item
+        else:
+            text, obj = str(item), item
+        texts.append(text)
+        objects.append(obj)
+    index_path = index_path.expanduser()
+    index_path.parent.mkdir(parents=True, exist_ok=True)
+    meta_path = index_path.with_suffix(".meta.json")
+    docs_hash = _hash_documents(texts)
+
+    if index_path.is_file() and meta_path.is_file():
+        try:
+            meta = json.loads(meta_path.read_text())
+        except Exception:
+            meta = {}
+        if meta.get("hash") == docs_hash:
+            index = faiss.read_index(str(index_path))
+            try:
+                setattr(index, "_documents", objects)
+            except Exception:  # pragma: no cover - unlikely
+                pass
+            if debug:
+                logger.debug("Loaded existing index from %s", index_path)
+            return index
+
+    if debug:
+        logger.debug("Creating new index at %s", index_path)
+    model = _get_model(model_name)
+    embeddings = model.encode(texts, convert_to_numpy=True)
+    dim = embeddings.shape[1]
+    index = faiss.IndexFlatL2(dim)
+    index.add(embeddings)
+    faiss.write_index(index, str(index_path))
+    meta_path.write_text(json.dumps({"hash": docs_hash, "timestamp": time.time()}))
     try:
         setattr(index, "_documents", objects)
-        setattr(index, "_meta_path", str(meta_path))
     except Exception:  # pragma: no cover - unlikely
         pass
     return index
@@ -148,16 +158,7 @@ def query_index(index, query_text: str, top_k: int) -> List[Any]:
     if not docs:
         return []
 
-    meta_path = getattr(index, "_meta_path", None)
-    model_name = MODEL_NAME
-    if meta_path and Path(meta_path).is_file():
-        try:
-            meta = json.loads(Path(meta_path).read_text())
-            model_name = meta.get("model_name", MODEL_NAME)
-        except Exception:
-            model_name = MODEL_NAME
-
-    model = _get_model(model_name)
+    model = _get_model(MODEL_NAME)
     query_vec = model.encode([query_text], convert_to_numpy=True)
     _, indices = index.search(query_vec, min(top_k, len(docs)))
     result = []
