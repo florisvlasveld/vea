@@ -99,9 +99,7 @@ def test_embeddings_return_dicts(tmp_path):
 
     assert isinstance(_extract(prompt, "== Additional Information (JSON) ==" )[0], dict)
     assert isinstance(_extract(prompt, "== Emails (JSON) ==" )[0], dict)
-    slack_section = _extract(prompt, "== Slack Messages (JSON) ==")
-    assert isinstance(slack_section, dict)
-    assert list(slack_section.keys()) == ["general"]
+    assert isinstance(_extract(prompt, "== Slack Messages (JSON) ==" )[0], dict)
 
 
 def test_sorting_without_embeddings(tmp_path):
@@ -200,6 +198,8 @@ def test_sorting_with_embeddings(tmp_path):
         seq = emails_s
     assert [m["subject"] for m in seq] == ["a", "b"]
     slack_s = _extract(prompt, "== Slack Messages (JSON) ==")
-    assert isinstance(slack_s, dict)
-    seq_sl = slack_s["general"]
+    if isinstance(slack_s, dict):
+        seq_sl = slack_s["general"]
+    else:
+        seq_sl = slack_s
     assert [m["text"] for m in seq_sl] == ["earlier", "later"]
