@@ -52,10 +52,21 @@ importlib.reload(summ)
 summ.run_llm_prompt = lambda prompt, *a, **k: prompt
 
 def _extract(prompt: str, header: str):
-    pattern = rf"{re.escape(header)}.*?\n(\[.*?\])"
-    m = re.search(pattern, prompt, re.S)
-    assert m, f"section {header} not found"
-    return json.loads(m.group(1))
+    start = prompt.find(header)
+    assert start != -1, f"section {header} not found"
+    lines = prompt[start:].splitlines()[1:]
+    collected = []
+    started = False
+    for line in lines:
+        if not started:
+            if line.startswith("[") or line.startswith("{"):
+                started = True
+                collected.append(line)
+            continue
+        if line.startswith("==") or line.startswith("---"):
+            break
+        collected.append(line)
+    return json.loads("\n".join(collected).strip())
 
 
 def test_embeddings_return_dicts(tmp_path):
@@ -67,7 +78,7 @@ def test_embeddings_return_dicts(tmp_path):
         tasks=[{'content': 't', 'description': 'd'}],
         journals=[{'filename': 'j', 'date': '2025-01-01', 'content': '- a\n- b'}],
         extras=[{'filename': 'e', 'content': 'extra'}],
-        slack={'general': [{'text': 'hi'}]},
+        slack={'general': [{'text': 'hi', 'channel': 'general'}]},
         quiet=True,
         debug=False,
         use_embeddings=True,
@@ -84,4 +95,7 @@ def test_embeddings_return_dicts(tmp_path):
 
     assert isinstance(_extract(prompt, "== Additional Information (JSON) ==" )[0], dict)
     assert isinstance(_extract(prompt, "== Emails (JSON) ==" )[0], dict)
-    assert isinstance(_extract(prompt, "== Slack Messages (JSON) ==" )[0], dict)
+    slack_section = _extract(prompt, "== Slack Messages (JSON) ==")
+    assert isinstance(slack_section, dict)
+    assert set(slack_section.keys()) == {"general"}
+    assert isinstance(slack_section["general"][0], dict)
