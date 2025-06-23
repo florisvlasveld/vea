@@ -28,7 +28,7 @@ def _get_model(name: str):
     return _MODEL_CACHE[name]
 
 INDEX_DIR = Path("~/.vea/indexes").expanduser()
-MODEL_NAME = "BAAI/bge-base-en-v1.5"
+    docs_list = list(documents)
     doc_items: List[Tuple[Union[str, Path], Any]] = []
     text_docs: List[str] = []
     path_mtimes: dict[str, float] = {}
