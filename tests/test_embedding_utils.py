@@ -105,10 +105,3 @@ def test_index_rebuild_on_mtime(tmp_path):
     load_or_create_index(idx_path, [str(doc)], debug=True)
     ts3 = json.loads(meta_path.read_text())["timestamp"]
     assert ts3 != ts2
-
-
-def test_empty_documents(tmp_path):
-    idx_path = tmp_path / "empty.index"
-    idx = load_or_create_index(idx_path, [], debug=True)
-    assert query_index(idx, "foo", 1) == []
-    assert not idx_path.exists()

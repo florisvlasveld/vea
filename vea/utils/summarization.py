@@ -94,7 +94,7 @@ def sort_by_timestamp(items: List[dict], fields: List[str]) -> List[dict]:
                 try:
                     return datetime.fromisoformat(str(item[f]))
                 except Exception:
-                    continue
+                    break
         return datetime.min
 
     return sorted(items, key=_parse)
@@ -102,7 +102,7 @@ def sort_by_timestamp(items: List[dict], fields: List[str]) -> List[dict]:
 def summarize_daily(
     model: str,
     date: date,
-    emails: Dict[str, List[dict]],
+    emails: List,
     calendars: List,
     tasks: List,
     journals: List,
@@ -266,7 +266,7 @@ def summarize_event_preparation(
     events: List[dict],
     journals: List,
     extras: List,
-    emails: Dict[str, List[dict]],
+    emails: Dict,
     tasks: List,
     slack: Optional[Dict[str, List[Dict[str, str]]]] = None,
     bio: str = "",
