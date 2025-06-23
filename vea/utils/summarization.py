@@ -128,9 +128,9 @@ def summarize_daily(
         if slack:
             for msgs in slack.values():
                 for m in msgs:
-                    slack_docs.append((m.get("text", ""), m))
+                    slack_docs.append((m.get("text", ""), dict(m)))
                     for r in m.get("replies", []):
-                        slack_docs.append((r.get("text", ""), r))
+                        slack_docs.append((r.get("text", ""), dict(r)))
 
         journal_index = load_or_create_index(INDEX_DIR / "journals.index", journal_docs, debug=debug)
         extras_index = load_or_create_index(INDEX_DIR / "extras.index", extras_docs, debug=debug)
@@ -160,6 +160,11 @@ def summarize_daily(
             q = f"{task.get('content','')} {task.get('description','')}"
             _accumulate(q)
 
+        slack_grouped: Dict[str, List[dict]] = {}
+        for item in _dedupe_dicts(slack_hits):
+            ch = item.get("channel", "unknown")
+            slack_grouped.setdefault(ch, []).append(item)
+
         prompt = render_daily_prompt(
             prompt_template,
             date=date,
@@ -169,7 +174,7 @@ def summarize_daily(
             emails=json.dumps(_dedupe_dicts(emails_hits), indent=2, default=str, ensure_ascii=False),
             journals=json.dumps(_dedupe_dicts(journals_hits), indent=2, default=str, ensure_ascii=False),
             extras=json.dumps(_dedupe_dicts(extras_hits), indent=2, default=str, ensure_ascii=False),
-            slack=json.dumps(_dedupe_dicts(slack_hits), indent=2, default=str, ensure_ascii=False) if slack else "",
+            slack=json.dumps(slack_grouped, indent=2, default=str, ensure_ascii=False) if slack else "",
         )
     else:
         prompt = render_daily_prompt(
@@ -272,9 +277,9 @@ def summarize_event_preparation(
         if slack:
             for msgs in slack.values():
                 for m in msgs:
-                    slack_docs.append((m.get("text", ""), m))
+                    slack_docs.append((m.get("text", ""), dict(m)))
                     for r in m.get("replies", []):
-                        slack_docs.append((r.get("text", ""), r))
+                        slack_docs.append((r.get("text", ""), dict(r)))
 
         journal_index = load_or_create_index(INDEX_DIR / "journals.index", journal_docs, debug=debug)
         extras_index = load_or_create_index(INDEX_DIR / "extras.index", extras_docs, debug=debug)
@@ -304,6 +309,11 @@ def summarize_event_preparation(
             q = f"{task.get('content','')} {task.get('description','')}"
             _accumulate(q)
 
+        slack_grouped: Dict[str, List[dict]] = {}
+        for item in _dedupe_dicts(slack_hits):
+            ch = item.get("channel", "unknown")
+            slack_grouped.setdefault(ch, []).append(item)
+
         prompt = template.format(
             bio=bio,
             events=json.dumps(events, indent=2, default=str, ensure_ascii=False),
@@ -311,7 +321,7 @@ def summarize_event_preparation(
             extras=json.dumps(_dedupe_dicts(extras_hits), indent=2, default=str, ensure_ascii=False),
             emails=json.dumps(_dedupe_dicts(emails_hits), indent=2, default=str, ensure_ascii=False),
             tasks=json.dumps(tasks, indent=2, default=str, ensure_ascii=False),
-            slack=json.dumps(_dedupe_dicts(slack_hits), indent=2, default=str, ensure_ascii=False) if slack else "",
+            slack=json.dumps(slack_grouped, indent=2, default=str, ensure_ascii=False) if slack else "",
         )
     else:
         prompt = template.format(

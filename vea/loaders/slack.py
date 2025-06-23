@@ -69,7 +69,13 @@ def get_channel_name(channel: Dict[str, Any], conv_type: str, user_map: Dict[str
         return channel.get("name", channel["id"])
 
 
-def fetch_thread_replies(client: WebClient, channel_id: str, thread_ts: str, user_map: Dict[str, str]) -> List[Dict[str, Any]]:
+def fetch_thread_replies(
+    client: WebClient,
+    channel_id: str,
+    thread_ts: str,
+    user_map: Dict[str, str],
+    channel_name: str,
+) -> List[Dict[str, Any]]:
     replies = []
     try:
         thread_data = safe_slack_call(
@@ -77,16 +83,21 @@ def fetch_thread_replies(client: WebClient, channel_id: str, thread_ts: str, use
             channel=channel_id,
             ts=thread_ts,
             inclusive=True,
-            limit=50
+            limit=50,
         ).get("messages", [])[1:]
         for reply in thread_data:
             if reply.get("subtype"):
                 continue
-            replies.append({
-                "user": user_map.get(reply.get("user", "unknown"), reply.get("user", "unknown")),
-                "timestamp": datetime.fromtimestamp(float(reply["ts"])).isoformat(),
-                "text": replace_slack_mentions(reply.get("text", "").strip(), user_map)
-            })
+            replies.append(
+                {
+                    "user": user_map.get(
+                        reply.get("user", "unknown"), reply.get("user", "unknown")
+                    ),
+                    "timestamp": datetime.fromtimestamp(float(reply["ts"])).isoformat(),
+                    "text": replace_slack_mentions(reply.get("text", "").strip(), user_map),
+                    "channel": channel_name,
+                }
+            )
     except SlackApiError as e:
         logger.warning(f"Failed to fetch thread replies: {e.response['error']}")
     return replies
@@ -118,10 +129,13 @@ def fetch_messages_from_channel(client: WebClient, channel: Dict[str, Any], conv
             "user": user_map.get(msg.get("user", "unknown"), msg.get("user", "unknown")),
             "timestamp": datetime.fromtimestamp(float(msg["ts"])).isoformat(),
             "text": replace_slack_mentions(msg.get("text", "").strip(), user_map),
+            "channel": channel_name,
         }
 
         if msg.get("thread_ts") == msg.get("ts") and msg.get("reply_count", 0) > 0:
-            msg_data["replies"] = fetch_thread_replies(client, channel_id, msg["ts"], user_map)
+            msg_data["replies"] = fetch_thread_replies(
+                client, channel_id, msg["ts"], user_map, channel_name
+            )
 
         messages.append(msg_data)
 
